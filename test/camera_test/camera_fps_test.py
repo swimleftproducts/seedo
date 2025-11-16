@@ -20,7 +20,7 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 # Try to request higher FPS
 cap.set(cv2.CAP_PROP_FPS, 30)
 
-time.sleep(0.2)
+time.sleep(0.3)
 
 print("Actual width :", cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 print("Actual height:", cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
