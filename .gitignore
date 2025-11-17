@@ -1,0 +1,6 @@
+# Ignore any folder with "data" in its name (case-sensitive)
+*data*/
+
+# ignore .DS_Store files
+.DS_Store
+**/.DS_Store
