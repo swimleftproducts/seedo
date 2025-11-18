@@ -8,6 +8,11 @@ import os
 class CameraManager:
     def __init__(self, target_fps=15, device_index=0, buffer_seconds=2):
         self.cap = cv2.VideoCapture(device_index)
+
+        # set camera resolution
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1080)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
         self.target_fps = target_fps
         self.last_frame_time = 0
         self.latest_frame = None
@@ -51,6 +56,8 @@ class CameraManager:
 
             self.last_frame_time = now
             return self.latest_frame
+        else:
+            return self.latest_frame
 
     def _initiate_saving(self):
         """Copy buffer safely and queue work for save thread."""
@@ -78,7 +85,7 @@ class CameraManager:
         end_time = buffer_copy[-1][0]
         filename = f"camera_{int(start_time)}_{int(end_time)}.avi"
 
-        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         data_dir = os.path.join(BASE_DIR, "data")
 
         os.makedirs(data_dir, exist_ok=True)
