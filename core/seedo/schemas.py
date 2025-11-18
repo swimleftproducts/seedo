@@ -19,6 +19,7 @@ class SeeDoSchema(BaseModel):
     type: str
     name: str
     interval_sec: float
+    min_retrigger_interval_sec: float = 0.0
     enabled: bool = True
     config: Dict[str, Any]
     action: ActionSchema

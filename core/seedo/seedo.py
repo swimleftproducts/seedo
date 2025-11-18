@@ -1,16 +1,25 @@
 import time
 from abc import ABC, abstractmethod
+import threading
 from .action import Action
 from .schemas import SeeDoSchema, BrightnessConfigSchema
 
 class SeeDo:
-    def __init__(self, name, interval_sec, action: Action, enabled=True):
+    def __init__(self, name, interval_sec, min_retrigger_interval_sec, action: Action, enabled=True):
         self.name = name
         self.interval_sec = interval_sec
+        self.min_retrigger_interval_sec = min_retrigger_interval_sec
         #TODO maybe support multiple actions
         self.action = action
         self.enabled = enabled
+        # This is the timestamp of last eval run
         self._last_run = 0.0
+
+        # This is the timestamp of last time the action was executed
+        self._last_action_time = 0.0
+
+        self._action_lock = threading.Lock()   # <--- lock for safe update
+
 
     def should_run(self, now):
         return (now - self._last_run) >= self.interval_sec
@@ -40,8 +49,8 @@ class SeeDo:
     
 
 class BrightnessSeeDo(SeeDo):
-    def __init__(self, name, interval_sec, threshold, action, enabled=True):
-        super().__init__(name, interval_sec, action, enabled)
+    def __init__(self, name, interval_sec, min_retrigger_interval_sec, threshold, action, enabled=True):
+        super().__init__(name, interval_sec, min_retrigger_interval_sec, action, enabled)
         self.threshold = threshold
 
     @classmethod
@@ -62,6 +71,7 @@ class BrightnessSeeDo(SeeDo):
         return cls(
             name=schema.name,
             interval_sec=schema.interval_sec,
+            min_retrigger_interval_sec=schema.min_retrigger_interval_sec,
             threshold=config.threshold,
             action=action,
             enabled=schema.enabled
