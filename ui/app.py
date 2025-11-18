@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 
+from ui.tabs.running_tab import RunningTab
+
 
 class SeeDoApp(tk.Tk):
     def __init__(self, controller):
@@ -28,7 +30,7 @@ class SeeDoApp(tk.Tk):
 
         # Tabs
         self.home_tab = ttk.Frame(self.notebook)
-        self.running_tab = ttk.Frame(self.notebook)
+        self.running_tab = RunningTab(self.notebook, self.controller)
         self.paused_tab = ttk.Frame(self.notebook)
         self.config_tab = ttk.Frame(self.notebook)
 
@@ -48,6 +50,9 @@ class SeeDoApp(tk.Tk):
         # start heartbeat tick
         self.tick()
 
+        #start UI refresh loop
+        self.refresh_ui()
+
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
 
@@ -57,6 +62,9 @@ class SeeDoApp(tk.Tk):
         self.controller.tick()
         self.after(10, self.tick)      # ~30 FPS engine tick
 
+    def refresh_ui(self):
+        self.running_tab.refresh()
+        self.after(1000, self.refresh_ui)  # refresh every second
 
     # ---------------- HOME PAGE ----------------
     def build_home_page(self):
