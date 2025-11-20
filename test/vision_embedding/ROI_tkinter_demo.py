@@ -2,10 +2,11 @@ import tkinter as tk
 import cv2
 from PIL import Image, ImageTk
 import time
-import torch.nn.functional as F
+#required if using PyTorch 
+#import torch.nn.functional as F
 import numpy as np
-
-from MobileNet_run import get_embedding   # same directory
+from MobileNet_run_onnx import get_embedding, similarity
+#from MobileNet_run import get_embedding   
 
 
 class ROIDrawer:
@@ -110,7 +111,8 @@ class ROIDrawer:
         pil = Image.fromarray(roi).convert("RGB")
         emb = get_embedding(pil)
 
-        score = float(F.cosine_similarity(self.baseline_embedding, emb, dim=0))
+        #score = float(F.cosine_similarity(self.baseline_embedding, emb, dim=0))
+        score = similarity(self.baseline_embedding, emb)
         print(f"Similarity score: {score:.3f}")
 
         self.canvas.itemconfig(self.score_text, text=f"Score: {score:.3f}")
