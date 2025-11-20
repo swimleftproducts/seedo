@@ -13,3 +13,19 @@ embedding_model.eval()
 # save local model
 torch.save(embedding_model.state_dict(), "test/vision_embedding/mobilenetv3_embed.pt")
 print("Saved local embedding model to test/vision_embedding/mobilenetv3_embed.pt")
+
+# ONNX export needs a dummy input with correct tensor size
+dummy_input = torch.randn(1, 3, 224, 224)
+
+# export embedding model (not full classifier)
+torch.onnx.export(
+    embedding_model,
+    dummy_input,
+    "test/vision_embedding/mobilenetv3_embed.onnx",
+    export_params=True,
+    opset_version=18,
+    input_names=["input"],
+    output_names=["embedding"]
+)
+
+print("Saved ONNX model to test/vision_embedding/mobilenetv3_embed.onnx")

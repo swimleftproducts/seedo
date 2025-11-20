@@ -1,37 +1,32 @@
-# test_embed.py
-import torch
-import torchvision.models as models
-import torch.nn as nn
+# test_embed_onnx.py
+
+import numpy as np
 from PIL import Image
-import torchvision.transforms as T
-import torch.nn.functional as F
 import onnxruntime as ort
+import torchvision.transforms as T
+import timeit
 import numpy as np
 
+# Load ONNX session
+session = ort.InferenceSession("test/vision_embedding/mobilenetv3_embed.onnx")
+input_name = session.get_inputs()[0].name
 
+def preprocess(pil):
+    img = pil.resize((224, 224))
+    arr = np.array(img).astype(np.float32) / 255.0
 
+    mean = np.array([0.485, 0.456, 0.406])
+    std  = np.array([0.229, 0.224, 0.225])
 
-# initialize same architecture
-base = models.mobilenet_v3_small()
-embedding_model = nn.Sequential(*list(base.children())[:-1])
+    arr = (arr - mean) / std   # normalize
+    arr = arr.transpose(2, 0, 1)  # HWC -> CHW
+    return arr[np.newaxis, ...].astype(np.float32)   # (1,3,224,224)
 
-# load weights locally
-embedding_model.load_state_dict(torch.load("test/vision_embedding/mobilenetv3_embed.pt", map_location="cpu"))
-embedding_model.eval()
-
-transform = T.Compose([
-    T.Resize((224, 224)),
-    T.ToTensor(),
-    T.Normalize([0.485, 0.456, 0.406],
-                [0.229, 0.224, 0.225])
-])
 
 def get_embedding(img: Image.Image):
-    inp = transform(img).unsqueeze(0)
-    with torch.no_grad():
-        emb = embedding_model(inp)
-    return emb.flatten()
-
+    x = preprocess(img)
+    out = session.run(None, {input_name: x})[0] # run inference
+    return out.flatten()                        # numpy vector
 
 def similarity(e1, e2):
     e1 = np.array(e1, dtype=np.float32)
@@ -45,8 +40,6 @@ def similarity(e1, e2):
 
 
 def compare_images():
-    from PIL import Image
-    
     ref_path = "test/vision_embedding/image/glass_on_table.png"
     no_glass_path = "test/vision_embedding/image/table_no_glass.png"
     diff_table_path = "test/vision_embedding/image/glass_on_table_2.png"
@@ -64,8 +57,7 @@ def compare_images():
 
 
 if __name__ == "__main__":
-  import timeit
-  start = timeit.default_timer()
-  compare_images()
-  end = timeit.default_timer()
-  print(f"PyTorch inference time: {end - start:.4f} seconds")
+    start = timeit.default_timer()
+    compare_images()
+    end = timeit.default_timer()
+    print(f"ONNX inference time: {end - start:.4f} seconds")
