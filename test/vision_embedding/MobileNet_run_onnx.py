@@ -3,7 +3,6 @@
 import numpy as np
 from PIL import Image
 import onnxruntime as ort
-import torchvision.transforms as T
 import timeit
 import numpy as np
 
