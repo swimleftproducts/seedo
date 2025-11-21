@@ -6,6 +6,8 @@ import time
 #import torch.nn.functional as F
 import numpy as np
 from MobileNet_run_onnx import get_embedding, similarity
+
+# this used the pytorch-based version
 #from MobileNet_run import get_embedding   
 
 

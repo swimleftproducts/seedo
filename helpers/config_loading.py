@@ -36,6 +36,19 @@ def load_all_seedos():
             seedos.append(seedo)
     return seedos
 
+def save_seedo(seedo):
+    """Save a single SeeDo to a JSON file using its to_dict() method."""
+
+    data = seedo.to_dict()
+    
+    filename = f"{data['name'].replace(' ', '_').lower()}_demo.json"
+    path = os.path.join(CONFIG_PATH, filename)
+
+    with open(path, "w") as f:
+         json.dump(data, f, indent=2)
+
+    print(f"Saved SeeDo to {path}")
+
 
 if __name__ == "__main__":
     # seedo = load_and_build_seedo("data/seedo_config/brightness_test.json")

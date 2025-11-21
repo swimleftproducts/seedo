@@ -20,6 +20,9 @@ class SeeDo:
 
         self._action_lock = threading.Lock()   # <--- lock for safe update
 
+    def toggle_enabled(self):
+        print(f'Toggling {self.name} to {(not self.enabled)}')
+        self.enabled = not self.enabled
 
     def should_run(self, now):
         return (now - self._last_run) >= self.interval_sec
@@ -76,4 +79,19 @@ class BrightnessSeeDo(SeeDo):
             action=action,
             enabled=schema.enabled
         )
+    
+    def to_dict(self):
+        return {
+            "type": 'brightness',
+            "name": self.name,
+            "interval_sec": self.interval_sec,
+            "min_retrigger_interval_sec": self.min_retrigger_interval_sec,
+            "enabled": self.enabled,
+            "config": self._config_dict(),  
+            "action": self.action.to_dict()
+        }
 
+    def _config_dict(self):
+        return {
+            "threshold": self.threshold
+        }

@@ -2,9 +2,9 @@ from tkinter import ttk
 import tkinter as tk
 import time
 
-class RunningTab(ttk.Frame):
+class SeeDoosOverviewTab(tk.Frame):
     def __init__(self, parent, controller):
-        super().__init__(parent)
+        super().__init__(parent, background='lightblue')
         self.controller = controller
 
         # Stores UI widgets per seedo for live updating
@@ -12,11 +12,12 @@ class RunningTab(ttk.Frame):
 
         # Column definitions
         self.column_headers = {
-            'enabled': 'Enabled',
             'name': 'SeeDo Name',
             'type': 'Type',
             'interval_sec': 'Evaluation Interval (sec)',
             '_last_action_time': "Last Action Time (timestamp)",
+            'enabled': 'Enabled',
+            'change_status': 'Enable / Disable'
         }
 
         self.build_ui()
@@ -32,7 +33,7 @@ class RunningTab(ttk.Frame):
 
         # Data rows expand
         for r in range(1, num_seedos + 1):
-            self.rowconfigure(r, weight=1)
+            self.rowconfigure(r, weight=0)
 
         # Configure columns to expand evenly
         for c in range(len(self.column_headers)):
@@ -54,23 +55,30 @@ class RunningTab(ttk.Frame):
 
         for row_index, seedo in enumerate(seedos, start=1):
 
-            enabled = ttk.Label(self, anchor='center', relief="solid")
-            enabled.grid(row=row_index, column=0, sticky="nsew", padx=5, pady=5)
-
             name = ttk.Label(self, anchor='center', relief="solid", text=seedo.name)
-            name.grid(row=row_index, column=1, sticky="nsew", padx=5, pady=5)
+            name.grid(row=row_index, column=0, sticky="nsew", padx=5, pady=5)
 
             type_label = ttk.Label(self, anchor='center', relief="solid", text=type(seedo).__name__)
-            type_label.grid(row=row_index, column=2, sticky="nsew", padx=5, pady=5)
+            type_label.grid(row=row_index, column=1, sticky="nsew", padx=5, pady=5)
 
             interval = ttk.Label(self, anchor='center', relief="solid")
-            interval.grid(row=row_index, column=3, sticky="nsew", padx=5, pady=5)
+            interval.grid(row=row_index, column=2, sticky="nsew", padx=5, pady=5)
 
             last_action = ttk.Label(self, anchor='center', relief="solid")
-            last_action.grid(row=row_index, column=4, sticky="nsew", padx=5, pady=5)
+            last_action.grid(row=row_index, column=3, sticky="nsew", padx=5, pady=5)
+
+            enabled = ttk.Label(self, anchor='center', relief="solid")
+            enabled.grid(row=row_index, column=4, sticky="nsew", padx=5, pady=5)
+
+            start_or_stop = ttk.Button(
+                self, 
+                text=('stop' if seedo.enabled else 'start'),
+                command=lambda s=seedo: self.controller.toggle_seedo(s.name),
+            )
+            start_or_stop.grid(row=row_index, column=5, sticky="nsew", padx=5, pady=5)
 
             # store in dictionary for refresh
-            self.rows[seedo] = (enabled, interval, last_action)
+            self.rows[seedo] = (interval, last_action, enabled)
 
         # Initial refresh so data is visible immediately
         self.refresh()
@@ -79,7 +87,7 @@ class RunningTab(ttk.Frame):
     def refresh(self):
         """Refresh UI row values from current SeeDo state."""
         for seedo, widgets in self.rows.items():
-            enabled, interval, last_action = widgets
+            interval, last_action, enabled = widgets
 
             enabled.config(text="Yes" if seedo.enabled else "No")
             interval.config(text=f"{seedo.interval_sec:.1f}")

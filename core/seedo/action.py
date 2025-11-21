@@ -9,6 +9,11 @@ class Action(ABC):
         """
         pass
 
+    @abstractmethod
+    def to_dict(self) -> dict:
+        """Return a dictionary representation of the action for saving to config."""
+        pass
+
 
 class EmailAction(Action):
     def __init__(self, config: EmailActionConfig ):
@@ -20,3 +25,14 @@ class EmailAction(Action):
 
     def execute(self, context):
         print(f"[EmailAction] Sending email: {self.subject}")
+
+    def to_dict(self):
+        return {
+            "type": 'email',
+            "params": {
+                "to": self.to,
+                "from_": self.from_,
+                "subject": self.subject,
+                "body_template": self.body_template
+            }
+        }

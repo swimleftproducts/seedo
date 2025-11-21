@@ -19,6 +19,11 @@ class AppController:
         if self.camera_manager.active:
             self.camera_manager.capture_frame()
             self.seedo_manager.run(self.camera_manager.latest_frame, time.time())
+    # -------- SEEDO CONTROL ---------
+
+    def toggle_seedo(self, seedo_name):
+        self.seedo_manager.toggle_seedo(seedo_name)
+  
 
     # -------- CAMERA CONTROL --------
     def start_camera(self):
