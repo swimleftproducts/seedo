@@ -41,7 +41,7 @@ def save_seedo(seedo):
 
     data = seedo.to_dict()
     
-    filename = f"{data['name'].replace(' ', '_').lower()}_demo.json"
+    filename = f"{data['name'].replace(' ', '_').lower()}.json"
     path = os.path.join(CONFIG_PATH, filename)
 
     with open(path, "w") as f:

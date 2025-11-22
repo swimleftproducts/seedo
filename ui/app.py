@@ -52,7 +52,7 @@ class SeeDoApp(tk.Tk):
 
     def refresh_ui(self):
         self.running_tab.refresh()
-        self.after(1000, self.refresh_ui)  # refresh every second
+        self.after(500, self.refresh_ui)  # refresh every second
 
     # ---------------- CLEANUP ----------------
     def on_close(self):

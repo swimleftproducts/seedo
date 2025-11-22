@@ -2,7 +2,7 @@ import time
 from abc import ABC, abstractmethod
 import threading
 from .action import Action
-from .schemas import SeeDoSchema, BrightnessConfigSchema
+from .schemas import SeeDoSchema, BrightnessConfigSchema, ActionSchema
 
 class SeeDo:
     def __init__(self, name, interval_sec, min_retrigger_interval_sec, action: Action, enabled=True):
@@ -49,6 +49,17 @@ class SeeDo:
     def config_schema(cls):
         """Return the matching Pydantic config schema class."""
         pass
+
+    @abstractmethod
+    def to_dict(self):
+        """Used for saving the the seedo"""
+        pass
+
+    @classmethod
+    @abstractmethod
+    def from_schema(cls, schema: SeeDoSchema, config, action):
+        """Instantiate from schema & config"""
+        pass
     
 
 class BrightnessSeeDo(SeeDo):
@@ -81,17 +92,13 @@ class BrightnessSeeDo(SeeDo):
         )
     
     def to_dict(self):
-        return {
-            "type": 'brightness',
-            "name": self.name,
-            "interval_sec": self.interval_sec,
-            "min_retrigger_interval_sec": self.min_retrigger_interval_sec,
-            "enabled": self.enabled,
-            "config": self._config_dict(),  
-            "action": self.action.to_dict()
-        }
-
-    def _config_dict(self):
-        return {
-            "threshold": self.threshold
-        }
+        schema = SeeDoSchema(
+        type="brightness",
+        name=self.name,
+        interval_sec=self.interval_sec,
+        min_retrigger_interval_sec=self.min_retrigger_interval_sec,
+        enabled=self.enabled,
+        config=BrightnessConfigSchema(threshold=self.threshold).model_dump(),
+        action=self.action.to_dict()
+        )
+        return schema.model_dump()

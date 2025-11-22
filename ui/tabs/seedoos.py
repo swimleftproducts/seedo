@@ -41,13 +41,13 @@ class SeeDoosOverviewTab(tk.Frame):
 
         # ---- Header tiles ----
         for col_index, (attr, header) in enumerate(self.column_headers.items()):
-            tile = tk.Frame(self, bg="red", height=40)
-            tile.grid(row=0, column=col_index, padx=5, pady=5, sticky="ew")
+            tile = tk.Frame(self, bg="black", height=40)
+            tile.grid(row=0, column=col_index, padx=10, pady=10, sticky="ew")
             tile.grid_propagate(False)
 
-            label = ttk.Label(tile, text=header, anchor="center",
-                              background="red", font=('Arial', 10, 'bold'))
-            label.pack(expand=True, fill='both')
+            label = ttk.Label(tile, text=header, foreground='white', anchor="center",
+                              background="black", font=('Arial', 12))
+            label.pack(expand=True, fill='both', padx=5, pady=5)
 
     # -------------- BUILD DATA ROWS ----------------
     def build_rows(self):
@@ -70,15 +70,18 @@ class SeeDoosOverviewTab(tk.Frame):
             enabled = ttk.Label(self, anchor='center', relief="solid")
             enabled.grid(row=row_index, column=4, sticky="nsew", padx=5, pady=5)
 
+            start_or_stop_style = "Red.TButton" if seedo.enabled else "Green.TButton"
             start_or_stop = ttk.Button(
                 self, 
+                style=start_or_stop_style,
                 text=('stop' if seedo.enabled else 'start'),
                 command=lambda s=seedo: self.controller.toggle_seedo(s.name),
             )
             start_or_stop.grid(row=row_index, column=5, sticky="nsew", padx=5, pady=5)
+            
 
             # store in dictionary for refresh
-            self.rows[seedo] = (interval, last_action, enabled)
+            self.rows[seedo] = (interval, last_action, enabled, start_or_stop)
 
         # Initial refresh so data is visible immediately
         self.refresh()
@@ -87,7 +90,7 @@ class SeeDoosOverviewTab(tk.Frame):
     def refresh(self):
         """Refresh UI row values from current SeeDo state."""
         for seedo, widgets in self.rows.items():
-            interval, last_action, enabled = widgets
+            interval, last_action, enabled, start_or_stop = widgets
 
             enabled.config(text="Yes" if seedo.enabled else "No")
             interval.config(text=f"{seedo.interval_sec:.1f}")
@@ -95,3 +98,11 @@ class SeeDoosOverviewTab(tk.Frame):
             last_action_time = seedo._last_action_time
             last_action_time_str_hours_mins_secs = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(last_action_time)) if last_action_time > 0 else "Never"
             last_action.config(text=last_action_time_str_hours_mins_secs  )
+        
+            #update button text:
+            start_or_stop.config(
+                text=('stop' if seedo.enabled else 'start'),
+                style=("Red.TButton" if seedo.enabled else "Green.TButton")
+            )
+
+         
