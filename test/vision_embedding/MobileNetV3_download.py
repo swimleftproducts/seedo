@@ -21,11 +21,15 @@ dummy_input = torch.randn(1, 3, 224, 224)
 torch.onnx.export(
     embedding_model,
     dummy_input,
-    "test/vision_embedding/mobilenetv3_embed.onnx",
+    "test/vision_embedding/mobilenetv3_embed_batch.onnx",
     export_params=True,
     opset_version=18,
     input_names=["input"],
-    output_names=["embedding"]
+    output_names=["embedding"],
+    dynamic_axes={
+        "input": {0: "batch_size"},      
+        "embedding": {0: "batch_size"}   
+    }
 )
 
-print("Saved ONNX model to test/vision_embedding/mobilenetv3_embed.onnx")
+print("Saved ONNX model to test/vision_embedding/mobilenetv3_embed_batch.onnx")
