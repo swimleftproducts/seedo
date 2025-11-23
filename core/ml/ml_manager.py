@@ -4,10 +4,10 @@ from PIL import Image
 
 class ML_manager:
    def __init__(self):
-      pass
+      self.mobile_net_v3 = None
    
    def Load_MobileNetV3(self):
-      self.mobilenetv3 = MobileNetV3()
+      self.mobile_net_v3 = MobileNetV3()
    
 
 class MobileNetV3:
@@ -30,7 +30,6 @@ class MobileNetV3:
     out = self.session.run(None, {self.input_name: batch})[0] # run inference
     return out  # (N, embedding_dim)
 
-
   def cosine_similarity_matrix(self, embeddings):
     # Normalize row-wise
     norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
@@ -52,6 +51,10 @@ class MobileNetV3:
     arr = (arr - mean) / std   # normalize
     arr = arr.transpose(2, 0, 1)  # HWC -> CHW
     return arr[np.newaxis, ...].astype(np.float32)   # (1,3,224,224)
+  
+  def slice_roi_from_image(self, pil: Image.Image, roi: tuple[int, int, int, int]) -> Image.Image:
+    x1, y1, x2, y2 = roi
+    return pil.crop((x1, y1, x2, y2))
 
 
 if __name__ == "__main__":

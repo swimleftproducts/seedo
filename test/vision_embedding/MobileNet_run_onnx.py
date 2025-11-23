@@ -53,8 +53,8 @@ def cosine_similarity_matrix(embeddings):
 
 
 def compare_images():
-    ref_path = "test/vision_embedding/image/glass_on_table.png"
-    no_glass_path = "test/vision_embedding/image/table_no_glass.png"
+    ref_path = "test/vision_embedding/image/same_A.png"
+    no_glass_path = "test/vision_embedding/image/same_B.png"
     diff_table_path = "test/vision_embedding/image/glass_on_table_2.png"
 
     img_ref = Image.open(ref_path).convert("RGB")
@@ -65,7 +65,7 @@ def compare_images():
     emb_none = get_embedding(img_none)
     emb_diff = get_embedding(img_diff)
 
-    print("Similarity(ref vs no_glass):", similarity(emb_ref, emb_none))
+    print("Similarity(A vs B):", similarity(emb_ref, emb_none))
     print("Similarity(ref vs glass_diff_table):", similarity(emb_ref, emb_diff))
 
 
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     end = timeit.default_timer()
     print(f"ONNX inference time single: {end - start:.4f} seconds")
 
-    start = timeit.default_timer()
-    compare_images_batch()
-    end = timeit.default_timer()
-    print(f"ONNX inference time batch: {end - start:.4f} seconds")
+    # start = timeit.default_timer()
+    # compare_images_batch()
+    # end = timeit.default_timer()
+    # print(f"ONNX inference time batch: {end - start:.4f} seconds")

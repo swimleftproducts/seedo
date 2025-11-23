@@ -1,6 +1,9 @@
 from core.camera_manager import CameraManager
 from core.seedo_manager import SeeDoManager
+from core.ml.ml_manager import ML_manager
 import time
+from PIL import Image
+import numpy as np
 
 
 class AppController:
@@ -13,6 +16,11 @@ class AppController:
     def __init__(self):
         self.camera_manager = CameraManager()
         self.seedo_manager = SeeDoManager()
+        self.ml_manager = ML_manager()
+
+        #NOTE: I could see lazy loading of models being better if there are many models
+        # and a given model is not used by any SeeDo instances yet.
+        self.ml_manager.Load_MobileNetV3()
 
     def tick(self):
         """Heartbeat invoked by UI .after() loop."""
@@ -42,6 +50,12 @@ class AppController:
     def stop_recording(self):
         print("Recording disabled")
         self.camera_manager.saving = False
+
+    # -------- ML CONTROL --------
+    def get_embedding(self, imgs: list[Image.Image]) -> np.ndarray:
+        """Get embedding from ML model for given image."""
+        return self.ml_manager.mobile_net_v3.get_embedding(imgs)
+    
 
     # -------- SHUTDOWN --------
     def shutdown(self):

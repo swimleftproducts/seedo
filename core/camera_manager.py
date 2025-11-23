@@ -9,9 +9,14 @@ class CameraManager:
     def __init__(self, target_fps=15, device_index=0, buffer_seconds=2):
         self.cap = cv2.VideoCapture(device_index)
 
-        # set camera resolution
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1080)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        self.target_width = 1280
+        self.target_height = 720
+
+        # set camera resolution, this will fail silently if unsupported
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.target_width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.target_height)
+
+        print("Actual camera resolution:", self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), "x", self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         self.target_fps = target_fps
         self.last_frame_time = 0
