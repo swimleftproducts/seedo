@@ -3,12 +3,17 @@ from tkinter import ttk
 from PIL import Image, ImageTk, ImageOps
 import numpy as np
 import timeit
+import time
+import threading
 
 class CameraFeedViewer(tk.Frame):
     def __init__(self, parent, controller, width, height):
         super().__init__(parent, background='lightblue')
         self.parent = parent
         self.controller = controller
+        self.similarity_results = {}
+        self.similarity_thread = None
+        self.stop_similarity_thread = False
 
         self.width = width
         self.height = height
@@ -61,13 +66,13 @@ class CameraFeedViewer(tk.Frame):
             command=self.parent.capture_embeddings
         )
         self.capture_embeddings.grid(row=2, column=0, pady=10, padx=10)
-        self.show_similarities = ttk.Button(
+        self.show_similarities_button = ttk.Button(
             self,
             text='Show similarity',
             style='Standard.TButton',
             command= self.toggle_show_similarities,
         )
-        self.show_similarities.grid(row=3, column=0, pady=10, padx=10)
+        self.show_similarities_button.grid(row=3, column=0, pady=10, padx=10)
 
         
 
@@ -108,37 +113,25 @@ class CameraFeedViewer(tk.Frame):
                     # apply offset to go from actual image coords to canvas coords
                     x1, y1, x2, y2 = self.parent.remove_roi_offset_and_scale(x1, y1, x2, y2)
                     self.camera_viewer.create_rectangle(x1, y1, x2, y2, outline="red", width=2)
-
-                if timeit.default_timer() - self.last_embedding_time > .1:
-                    self.last_embedding_time = timeit.default_timer()
-                    for region in self.parent.semantic_regions:
+                
+                if self.show_similarities:
+                    for i, sim_score in self.similarity_results.items():
+                        region = self.parent.semantic_regions[i]
                         x1, y1, x2, y2 = region['roi']
                         # apply offset to go from actual image coords to canvas coords
                         x1, y1, x2, y2 = self.parent.remove_roi_offset_and_scale(x1, y1, x2, y2)
-                        if self.show_similarities and region['embedding'] is not None:
-                            # get current frame sliced from the ROI
-                            # get embedding of the new sliced image
-                            # compare to existing embedding
-                            # show similarity score
-                            current_img = self.parent.get_image_from_frame(img, (x1, y1, x2, y2))
-                            current_img.save("debug_current_roi.png")
-                            region['image'].save("debug_region_roi.png")
-                            current_embedding = self.controller.ml_manager.mobile_net_v3.get_image_embedding(current_img)
-                            sim = self.controller.ml_manager.mobile_net_v3.cosine_similarity_matrix(
-                                np.vstack([region['embedding'].squeeze(), current_embedding.squeeze()])
-                            )
-                            similarity_score = sim[0,1]
-                            self.camera_viewer.create_text(
-                                (x1 + x2) // 2,
-                                y2 + 15,
-                                text=f"Sim: {similarity_score:.2f}",
-                                fill="yellow",
-                                font=("Helvetica", 12)
-                            )
-                    end = timeit.default_timer()
-                    print(f"Similarity display time: {end - self.last_embedding_time:.4f} seconds")
+                        self.camera_viewer.create_text(
+                            (x1 + x2) // 2,
+                            y2 + 15,
+                            text=f"Sim: {sim_score:.2f}",
+                            fill="yellow",
+                            font=("Helvetica", 12)
+                        )
+
                 if self.rect:
                     self.camera_viewer.create_rectangle(self.rect, outline="yellow", width=2)
+
+            
             
             
             self.after(33, self.update_camera_viewer)
@@ -170,7 +163,39 @@ class CameraFeedViewer(tk.Frame):
         return
     
     def toggle_show_similarities(self):
+        print("Toggling show similarities")
         self.show_similarities = not self.show_similarities
+        print("Show similarities:", self.show_similarities)
+        if self.show_similarities:
+            self.start_similarity_thread()
+        else:
+            self.stop_similarity_thread = False
+
+    def start_similarity_thread(self):
+        def worker():
+            while self.show_similarities and not self.stop_similarity_thread:
+                frame = self.controller.camera_manager.latest_frame
+                if frame is None:
+                    continue
+
+                img = Image.fromarray(frame)
+                results = {}
+                print('Computing similarities...')
+                for i, region in enumerate(self.parent.semantic_regions):
+                    x1, y1, x2, y2 = region['roi']
+                    cropped = img.crop((x1, y1, x2, y2))
+                    cropped.save("worker_debug_current_roi.png")
+                    current_embedding = self.controller.ml_manager.mobile_net_v3.get_image_embedding(cropped)
+                    sim = self.controller.ml_manager.mobile_net_v3.cosine_similarity_matrix(
+                        np.vstack([region['embedding'].squeeze(), current_embedding.squeeze()])
+                    )
+                    results[i] = float(sim[0,1])
+
+                self.similarity_results = results
+                time.sleep(0.1)  # 10 fps max
+
+        self.similarity_thread = threading.Thread(target=worker, daemon=True)
+        self.similarity_thread.start()
 
  
 
