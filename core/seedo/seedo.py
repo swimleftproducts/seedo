@@ -48,11 +48,7 @@ class SeeDo:
         """Override in subclass to evaluate condition"""
         pass
 
-    @classmethod
-    @abstractmethod
-    def from_config(cls, config: dict):
-        """Instantiate SeeDo from config dictionary"""
-        pass
+  
     
     @classmethod
     @abstractmethod
@@ -78,15 +74,36 @@ class SemanticSimilaritySeeDo(SeeDo):
         self.semantic_regions = semantic_regions  # List of dicts with roi and embedding
         
 
-    @abstractmethod
-    def evaluate(self, frame, timestamp) -> bool:
-        """Override in subclass to evaluate condition"""
-        pass
+    def evaluate(self, frame, timestamp, ml_manager) -> bool:
+        if frame is None:
+            return False
 
-    @classmethod
-    def from_config(cls, config: dict):
-        """Instantiate SeeDo from config dictionary"""
-        pass
+        images = []
+        for region in self.semantic_regions:
+            x1, y1, x2, y2 = region.roi
+            pil = Image.fromarray(frame)
+            cropped = pil.crop((x1, y1, x2, y2))
+            images.append(cropped)
+
+        # Compute embeddings batch
+        new_embeddings = ml_manager.mobile_net_v3.get_embedding_batch(images)
+
+        # check thresholds individually
+        triggered = False
+        for region, current_emb in zip(self.semantic_regions, new_embeddings):
+            sim = ml_manager.mobile_net_v3.cosine_similarity_matrix(
+                np.vstack([region.embedding.squeeze(), current_emb.squeeze()])
+            )[0,1]
+
+            if region.greater_than and sim > region.similarity_threshold:
+                triggered = True
+            elif not region.greater_than and sim < region.similarity_threshold:
+                triggered = True
+
+        return triggered
+
+
+    
 
     @classmethod
     def build_embedding_save_path(cls, seedo_name: str, index: int) -> str:

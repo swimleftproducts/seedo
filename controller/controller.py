@@ -21,9 +21,9 @@ class AppController:
     """
 
     def __init__(self):
-        self.camera_manager = CameraManager()
-        self.seedo_manager = SeeDoManager()
         self.ml_manager = ML_manager()
+        self.camera_manager = CameraManager()
+        self.seedo_manager = SeeDoManager(self.ml_manager)
 
         #NOTE: I could see lazy loading of models being better if there are many models
         # and a given model is not used by any SeeDo instances yet.

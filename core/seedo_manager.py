@@ -3,8 +3,10 @@ import threading
 from helpers.config_loading import load_all_seedos, save_seedo
 
 class SeeDoManager:
-    def __init__(self):
+    def __init__(self, ml_manager):
+        self.ml_manager = ml_manager
         self.seedos = load_all_seedos()
+
         print(f"SeeDoManager initialized with {len(self.seedos)} SeeDos.")
         # I am not sure this should be initialized to zero. What if a SeeDo have past history?
         self._last_run = {seedo: 0.0 for seedo in self.seedos}
@@ -52,7 +54,7 @@ class SeeDoManager:
         ).start()
 
     def _process_seedo(self, seedo, frame, now):
-        result = seedo.evaluate(frame, now)
+        result = seedo.evaluate(frame, now, self.ml_manager)
         if result:
             with seedo._action_lock:
                 if (now - seedo._last_action_time) >= seedo.min_retrigger_interval_sec:

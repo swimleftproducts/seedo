@@ -167,6 +167,7 @@ class CreateSeeDo_Semantic_Similarity_Frame(tk.Frame):
 
         return scale_x, scale_y
 
+    #BAD SEPARATIOM OF CONCERNS. SHOULD CALL CONTROLLER
     def capture_embeddings(self):
         #TODO need to remove direct use of camera manger.
         camera = self.controller.camera_manager

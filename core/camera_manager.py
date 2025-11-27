@@ -91,7 +91,7 @@ class CameraManager:
         filename = f"camera_{int(start_time)}_{int(end_time)}.avi"
 
         BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        data_dir = os.path.join(BASE_DIR, "data")
+        data_dir = os.path.join(BASE_DIR, "data/video")
 
         os.makedirs(data_dir, exist_ok=True)
         filepath = os.path.join(data_dir, filename)
