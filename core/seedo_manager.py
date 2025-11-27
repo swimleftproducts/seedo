@@ -6,7 +6,7 @@ class SeeDoManager:
     def __init__(self):
         self.seedos = load_all_seedos()
         print(f"SeeDoManager initialized with {len(self.seedos)} SeeDos.")
-        # I am not sure this should be initiallized to zero. What if a SeeDo have past history?
+        # I am not sure this should be initialized to zero. What if a SeeDo have past history?
         self._last_run = {seedo: 0.0 for seedo in self.seedos}
 
     def toggle_seedo(self, seedo_name):
@@ -17,6 +17,12 @@ class SeeDoManager:
                 save_seedo(s)
                 return
         print("SeeDo not found:", seedo_name)
+
+    def save_seedo(self, seedo):
+        """save seedo"""
+        save_seedo(seedo)
+        print(f"{seedo.name} saved")
+
 
     def add(self, seedo):
         self.seedos.append(seedo)

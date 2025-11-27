@@ -1,4 +1,5 @@
 import json
+from typing import List
 import os
 from core.seedo.schemas import SeeDoSchema, BrightnessConfigSchema
 from core.seedo.registry import SEEDO_REGISTRY, ACTION_REGISTRY
@@ -11,6 +12,18 @@ def load_seedo_config(path: str) -> SeeDoSchema:
     schema = SeeDoSchema(**raw)
     return schema
 
+def find_config_folders()-> List[str]:
+    config_files = []
+    for folder in os.listdir(CONFIG_PATH):
+        full_folder_path = os.path.join(CONFIG_PATH, folder)
+
+        if not os.path.isdir(full_folder_path):
+            continue
+
+        for filename in os.listdir(full_folder_path):
+            if filename.endswith(".json"):
+                config_files.append(os.path.join(full_folder_path, filename))
+    return config_files
 
 def load_and_build_seedo(path: str):
     schema = load_seedo_config(path)
@@ -29,20 +42,20 @@ def load_and_build_seedo(path: str):
 
 def load_all_seedos():
     seedos = []
-    for filename in os.listdir(CONFIG_PATH):
-        if filename.endswith(".json"):
-            path = os.path.join(CONFIG_PATH, filename)
-            seedo = load_and_build_seedo(path)
-            seedos.append(seedo)
+    config_files = find_config_folders()
+    for config in config_files:
+        seedo = load_and_build_seedo(config)
+        seedos.append(seedo)
+
     return seedos
 
 def save_seedo(seedo):
     """Save a single SeeDo to a JSON file using its to_dict() method."""
-
     data = seedo.to_dict()
-    
-    filename = f"{data['name'].replace(' ', '_').lower()}.json"
-    path = os.path.join(CONFIG_PATH, filename)
+    dir_name = f"{data['name'].replace(' ', '_').lower()}"
+    filename = f"{dir_name}.json"
+    dir_and_file = dir_name+ '/'+filename
+    path = os.path.join(CONFIG_PATH, dir_and_file)
 
     with open(path, "w") as f:
          json.dump(data, f, indent=2)

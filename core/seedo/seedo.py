@@ -4,6 +4,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 import threading
 import os
+from typing import List
 
 
 from torch import embedding
@@ -72,7 +73,7 @@ class SeeDo:
     
 class SemanticSimilaritySeeDo(SeeDo):
     """A seedo that compares semantic similarity of regions in the frame to reference embeddings."""
-    def __init__(self, name, interval_sec, min_retrigger_interval_sec, semantic_regions, action, enabled=True):
+    def __init__(self, name, interval_sec, min_retrigger_interval_sec, semantic_regions: List[SemanticSimilarityConfigSchema], action, enabled=True):
         super().__init__(name, interval_sec, min_retrigger_interval_sec, action, enabled)
         self.semantic_regions = semantic_regions  # List of dicts with roi and embedding
         
@@ -88,9 +89,17 @@ class SemanticSimilaritySeeDo(SeeDo):
         pass
 
     @classmethod
+    def build_embedding_save_path(cls, seedo_name: str, index: int) -> str:
+        return os.path.join(EMBEDDING_SAVE_FOLDER_BASE, seedo_name, f"embedding_{index}.npy")
+
+    @classmethod
+    def build_roi_image_save_path(cls, seedo_name: str, index: int) -> str:
+        return os.path.join(IMAGE_SAVE_FOLDER_BASE, seedo_name, f"roi_image_{index}.png")
+
+    @classmethod
     def save_roi_embedding_to_file(cls, seedo_name: str, index:int, embedding: np.ndarray):
         """Save embedding to .npy file."""
-        filepath = EMBEDDING_SAVE_FOLDER_BASE + f"/{seedo_name}/embedding_{index}.npy"
+        filepath = cls.build_embedding_save_path(seedo_name, index)
         #create directory if it doesn't exist
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         np.save(filepath, embedding)
@@ -99,7 +108,7 @@ class SemanticSimilaritySeeDo(SeeDo):
     @classmethod
     def save_roi_image_to_file(cls, seedo_name: str, image: Image.Image, index:int):
         """Save image to file."""
-        filepath = IMAGE_SAVE_FOLDER_BASE + f"/{seedo_name}/roi_image_{index}.png"
+        filepath = cls.build_roi_image_save_path(seedo_name, index)
         #create directory if it doesn't exist
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         image.save(filepath)
@@ -111,11 +120,31 @@ class SemanticSimilaritySeeDo(SeeDo):
         return SemanticSimilarityConfigSchema
 
     def to_dict(self):
-        """Used for saving the the seedo"""
-        pass
+        regions = []
+        for idx, region in enumerate(self.semantic_regions):
+            regions.append({
+                "roi": region["roi"],
+                "image_path": self.build_roi_image_save_path(self.name, idx),
+                "embedding_path": self.build_embedding_save_path(self.name, idx),
+                "similarity_threshold": region["similarity_threshold"],
+                "greater_than": region["greater_than"],
+            })
+
+        return {
+            "type": "semantic_similarity",
+            "name": self.name,
+            "interval_sec": self.interval_sec,
+            "min_retrigger_interval_sec": self.min_retrigger_interval_sec,
+            "enabled": self.enabled,
+            "config": {
+                "semantic_regions": regions
+            },
+            "action": self.action.to_dict()
+        }
+
 
     @classmethod
-    def from_schema(cls, schema: SeeDoSchema, config: SemanticSimilarityConfigSchema, action: ActionSchema):
+    def from_schema(cls, schema: SeeDoSchema, config: SemanticSimilarityConfigSchema, action):
         """Instantiate from schema & config"""
 
         # Load images and embeddings for each semantic region
@@ -136,7 +165,7 @@ class SemanticSimilaritySeeDo(SeeDo):
                 "greater_than": region.greater_than
             })
 
-        cls(
+        return cls(
             name=schema.name,
             interval_sec=schema.interval_sec,
             min_retrigger_interval_sec=schema.min_retrigger_interval_sec,

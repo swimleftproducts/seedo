@@ -61,8 +61,6 @@ class AppController:
                 idx,
                 emb
             )
-            print(f"Saved ROI image to {image_path}")
-            print(f"Saved ROI embedding to {embedding_path}")
             new_region = SemanticRegion(
                 roi=roi,
                 image_path=image_path,
@@ -72,7 +70,8 @@ class AppController:
             )
             semantic_regions.append(new_region)
 
-        # build action
+        # TODO: this only works with a email action. This should be
+        # more universal.
        
         email_action_config = EmailActionConfig(
             to=options_data['email_to'],
@@ -83,14 +82,18 @@ class AppController:
 
         action = EmailAction(email_action_config)
 
-        semantic_seedo = SemanticSimilaritySeeDo(
-            semantic_regions=semantic_regions,
-            name = options_data['name'],
-            interval_sec = options_data['trigger_interval_sec'],
-            min_retrigger_interval_sec = options_data['min_retrigger_interval_sec'],
-            enabled = False,
-            action = action,
+        schema = SeeDoSchema(
+            type='semantic',
+            name=options_data['name'],
+            interval_sec=options_data['trigger_interval_sec'],
+            min_retrigger_interval_sec=options_data['min_retrigger_interval_sec'],
+            enabled=False,
+            action=ActionSchema(type='email', params=email_action_config.model_dump()),
+            config=SemanticSimilarityConfigSchema(semantic_regions=semantic_regions).model_dump()
         )
+
+        semantic_seedo = SemanticSimilaritySeeDo.from_schema(schema, SemanticSimilarityConfigSchema(semantic_regions=semantic_regions), action)
+        self.seedo_manager.save_seedo(semantic_seedo)
 
         self.seedo_manager.add(semantic_seedo)
 

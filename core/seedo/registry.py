@@ -1,9 +1,10 @@
-from .seedo import BrightnessSeeDo
+from .seedo import BrightnessSeeDo, SemanticSimilaritySeeDo
 from .action import EmailAction
 from .schemas import EmailActionConfig
 
 SEEDO_REGISTRY = {
-    "brightness": BrightnessSeeDo
+    "brightness": BrightnessSeeDo,
+    "semantic_similarity": SemanticSimilaritySeeDo
 }
 
 ACTION_REGISTRY = {
