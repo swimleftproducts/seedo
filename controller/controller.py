@@ -62,6 +62,8 @@ class AppController:
                 emb
             )
             new_region = SemanticRegion(
+                image=image,
+                embedding=emb,
                 roi=roi,
                 image_path=image_path,
                 embedding_path=embedding_path,

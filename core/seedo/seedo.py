@@ -123,11 +123,11 @@ class SemanticSimilaritySeeDo(SeeDo):
         regions = []
         for idx, region in enumerate(self.semantic_regions):
             regions.append({
-                "roi": region["roi"],
+                "roi": region.roi,
                 "image_path": self.build_roi_image_save_path(self.name, idx),
                 "embedding_path": self.build_embedding_save_path(self.name, idx),
-                "similarity_threshold": region["similarity_threshold"],
-                "greater_than": region["greater_than"],
+                "similarity_threshold": region.similarity_threshold,
+                "greater_than": region.greater_than,
             })
 
         return {
@@ -137,7 +137,7 @@ class SemanticSimilaritySeeDo(SeeDo):
             "min_retrigger_interval_sec": self.min_retrigger_interval_sec,
             "enabled": self.enabled,
             "config": {
-                "semantic_regions": regions
+                "semantic_regions": [r.model_dump(exclude={"image", "embedding"}) for r in self.semantic_regions]
             },
             "action": self.action.to_dict()
         }
@@ -150,20 +150,15 @@ class SemanticSimilaritySeeDo(SeeDo):
         # Load images and embeddings for each semantic region
         semantic_regions = []
         for region in config.semantic_regions:
-            image_path= region.image_path  # Load image from path
-            embedding_path= region.embedding_path  # Load embedding from .npy file
-            # load image and embeddings. The paths are specified from
-            # the project root. This will need to change when
-            # called on the raspberry pi.
-            image = Image.open(image_path)
-            embedding = np.load(embedding_path)
-            semantic_regions.append({
-                "roi": region.roi,
-                "image": image,
-                "embedding": embedding,
-                "similarity_threshold": region.similarity_threshold,
-                "greater_than": region.greater_than
-            })
+            # Load image & embedding files
+            image = Image.open(region.image_path)
+            embedding = np.load(region.embedding_path)
+
+            # Assign runtime-only fields (not serialized)
+            region.image = image
+            region.embedding = embedding
+
+            semantic_regions.append(region)
 
         return cls(
             name=schema.name,

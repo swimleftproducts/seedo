@@ -1,5 +1,7 @@
-from pydantic import BaseModel
-from typing import Dict, Any, Tuple, List
+from pydantic import BaseModel, Field
+from typing import Dict, Any, Tuple, List, Optional
+from PIL import Image
+import numpy as np
 
 class ActionSchema(BaseModel):
     type: str
@@ -29,6 +31,14 @@ class SemanticRegion(BaseModel):
     image_path: str           # cropped ROI image
     similarity_threshold: float
     greater_than: bool = True
+
+    # Runtime-only fields (not part of saved JSON)
+    image: Optional[Image.Image] = Field(default=None, exclude=True)
+    embedding: Optional[np.ndarray] = Field(default=None, exclude=True)
+
+    class Config:
+        arbitrary_types_allowed = True   # Required to support Image & numpy types
+
 
 class SemanticSimilarityConfigSchema(BaseModel):
     semantic_regions: List[SemanticRegion]
