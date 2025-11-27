@@ -1,5 +1,6 @@
 from .seedo import BrightnessSeeDo
-from .action import EmailAction, EmailActionConfig
+from .action import EmailAction
+from .schemas import EmailActionConfig
 
 SEEDO_REGISTRY = {
     "brightness": BrightnessSeeDo

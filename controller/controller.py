@@ -1,9 +1,16 @@
 from core.camera_manager import CameraManager
 from core.seedo_manager import SeeDoManager
 from core.ml.ml_manager import ML_manager
+from core.seedo.seedo import SemanticSimilaritySeeDo
+from core.seedo.schemas import SeeDoSchema, SemanticRegion, SemanticSimilarityConfigSchema, ActionSchema, EmailActionConfig
+from core.seedo.action import EmailAction
 import time
 from PIL import Image
 import numpy as np
+from core.secrets import get_secret
+
+
+
 
 
 class AppController:
@@ -22,6 +29,8 @@ class AppController:
         # and a given model is not used by any SeeDo instances yet.
         self.ml_manager.Load_MobileNetV3()
 
+        self.new_seedo_created = False
+
     def tick(self):
         """Heartbeat invoked by UI .after() loop."""
         if self.camera_manager.active:
@@ -30,10 +39,69 @@ class AppController:
     # -------- SEEDO CONTROL ---------
 
     def toggle_seedo(self, seedo_name):
-        self.seedo_manager.toggle_seedo(seedo_name)
-  
+        self.seedo_manager.toggle_seedo(seedo_name) 
+
+    def new_seedo_handled(self):
+        self.new_seedo_created = False
+        
+    def create_semantic_similarity_seedo(self, options_data) -> bool:
+        """Create and add a new Semantic Similarity SeeDo with given options.
+        If the options are invalid raise a ValueError. and return False."""
+       
+        semantic_regions = []
+
+        for idx, (roi, image, emb) in enumerate(options_data['semantic_regions']):
+            image_path = SemanticSimilaritySeeDo.save_roi_image_to_file(
+                options_data['name'],
+                image,
+                idx
+            )
+            embedding_path = SemanticSimilaritySeeDo.save_roi_embedding_to_file(
+                options_data['name'],
+                idx,
+                emb
+            )
+            print(f"Saved ROI image to {image_path}")
+            print(f"Saved ROI embedding to {embedding_path}")
+            new_region = SemanticRegion(
+                roi=roi,
+                image_path=image_path,
+                embedding_path=embedding_path,
+                similarity_threshold=options_data['similarity_threshold'],
+                greater_than=True if options_data['trigger_when'] == 'greater' else False
+            )
+            semantic_regions.append(new_region)
+
+        # build action
+       
+        email_action_config = EmailActionConfig(
+            to=options_data['email_to'],
+            from_ = get_secret('FROM_EMAIL'),
+            body_template = options_data['email_body'],
+            subject = 'Semantic Seedo Triggered'
+        )
+
+        action = EmailAction(email_action_config)
+
+        semantic_seedo = SemanticSimilaritySeeDo(
+            semantic_regions=semantic_regions,
+            name = options_data['name'],
+            interval_sec = options_data['trigger_interval_sec'],
+            min_retrigger_interval_sec = options_data['min_retrigger_interval_sec'],
+            enabled = False,
+            action = action,
+        )
+
+        self.seedo_manager.add(semantic_seedo)
+
+        self.new_seedo_created = True
+
+
 
     # -------- CAMERA CONTROL --------
+    def is_camera_active(self) -> bool:
+        return self.camera_manager.active
+
     def start_camera(self):
         print("Starting camera...")
         self.camera_manager.active = True
@@ -41,6 +109,9 @@ class AppController:
     def stop_camera(self):
         print("Stopping camera...")
         self.camera_manager.active = False
+
+    def get_latest_frame(self) -> np.ndarray | None:
+        return self.camera_manager.latest_frame
 
     # -------- RECORDING CONTROL --------
     def start_recording(self):

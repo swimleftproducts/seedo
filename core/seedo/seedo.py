@@ -1,8 +1,17 @@
 import time
+from PIL import Image
+import numpy as np
 from abc import ABC, abstractmethod
 import threading
+import os
+
+
+from torch import embedding
 from .action import Action
-from .schemas import SeeDoSchema, BrightnessConfigSchema, ActionSchema
+from .schemas import SeeDoSchema, BrightnessConfigSchema, ActionSchema, SemanticSimilarityConfigSchema, SemanticRegion
+
+EMBEDDING_SAVE_FOLDER_BASE = 'data/seedo_config'
+IMAGE_SAVE_FOLDER_BASE = 'data/seedo_config'
 
 class SeeDo:
     def __init__(self, name, interval_sec, min_retrigger_interval_sec, action: Action, enabled=True):
@@ -61,6 +70,82 @@ class SeeDo:
         """Instantiate from schema & config"""
         pass
     
+class SemanticSimilaritySeeDo(SeeDo):
+    """A seedo that compares semantic similarity of regions in the frame to reference embeddings."""
+    def __init__(self, name, interval_sec, min_retrigger_interval_sec, semantic_regions, action, enabled=True):
+        super().__init__(name, interval_sec, min_retrigger_interval_sec, action, enabled)
+        self.semantic_regions = semantic_regions  # List of dicts with roi and embedding
+        
+
+    @abstractmethod
+    def evaluate(self, frame, timestamp) -> bool:
+        """Override in subclass to evaluate condition"""
+        pass
+
+    @classmethod
+    def from_config(cls, config: dict):
+        """Instantiate SeeDo from config dictionary"""
+        pass
+
+    @classmethod
+    def save_roi_embedding_to_file(cls, seedo_name: str, index:int, embedding: np.ndarray):
+        """Save embedding to .npy file."""
+        filepath = EMBEDDING_SAVE_FOLDER_BASE + f"/{seedo_name}/embedding_{index}.npy"
+        #create directory if it doesn't exist
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        np.save(filepath, embedding)
+        return filepath
+    
+    @classmethod
+    def save_roi_image_to_file(cls, seedo_name: str, image: Image.Image, index:int):
+        """Save image to file."""
+        filepath = IMAGE_SAVE_FOLDER_BASE + f"/{seedo_name}/roi_image_{index}.png"
+        #create directory if it doesn't exist
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        image.save(filepath)
+        return filepath
+    
+    @classmethod
+    def config_schema(cls):
+        """Return the matching Pydantic config schema class."""
+        return SemanticSimilarityConfigSchema
+
+    def to_dict(self):
+        """Used for saving the the seedo"""
+        pass
+
+    @classmethod
+    def from_schema(cls, schema: SeeDoSchema, config: SemanticSimilarityConfigSchema, action: ActionSchema):
+        """Instantiate from schema & config"""
+
+        # Load images and embeddings for each semantic region
+        semantic_regions = []
+        for region in config.semantic_regions:
+            image_path= region.image_path  # Load image from path
+            embedding_path= region.embedding_path  # Load embedding from .npy file
+            # load image and embeddings. The paths are specified from
+            # the project root. This will need to change when
+            # called on the raspberry pi.
+            image = Image.open(image_path)
+            embedding = np.load(embedding_path)
+            semantic_regions.append({
+                "roi": region.roi,
+                "image": image,
+                "embedding": embedding,
+                "similarity_threshold": region.similarity_threshold,
+                "greater_than": region.greater_than
+            })
+
+        cls(
+            name=schema.name,
+            interval_sec=schema.interval_sec,
+            min_retrigger_interval_sec=schema.min_retrigger_interval_sec,
+            semantic_regions=semantic_regions,
+            action=action,
+            enabled=schema.enabled
+        )
+    
+
 
 class BrightnessSeeDo(SeeDo):
     def __init__(self, name, interval_sec, min_retrigger_interval_sec, threshold, action, enabled=True):

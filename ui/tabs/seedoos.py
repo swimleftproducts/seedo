@@ -51,6 +51,7 @@ class SeeDoosOverviewTab(tk.Frame):
 
     # -------------- BUILD DATA ROWS ----------------
     def build_rows(self):
+
         seedos = self.controller.seedo_manager.seedos
 
         for row_index, seedo in enumerate(seedos, start=1):

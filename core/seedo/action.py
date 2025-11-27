@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from .schemas import EmailActionConfig
+from pydantic import BaseModel
+from core.seedo.schemas import EmailActionConfig
 
 class Action(ABC):
     @abstractmethod
@@ -13,7 +14,6 @@ class Action(ABC):
     def to_dict(self) -> dict:
         """Return a dictionary representation of the action for saving to config."""
         pass
-
 
 class EmailAction(Action):
     def __init__(self, config: EmailActionConfig ):

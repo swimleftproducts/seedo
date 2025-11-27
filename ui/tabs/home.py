@@ -76,7 +76,6 @@ class MenuView(tk.Frame):
         for r in range(1, 7):
             self.rowconfigure(r, weight=1)
 
-        ttk.Button(self, style='Standard.TButton', text="Create SeeDo", width=20,).grid(row=1, column=0,  sticky="")
         ttk.Button(self, style='Standard.TButton', text="View Camera", width=20,
                    command=lambda: parent.show_frame(parent.CameraViewerView)).grid(row=2, column=0, sticky="")
         ttk.Button(self, style='Standard.TButton', text="Start Camera",

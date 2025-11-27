@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
+import timeit
 
 from ui.tabs.seedoos import SeeDoosOverviewTab
 from ui.tabs.create_seedo import CreateSeeDo
@@ -51,6 +52,9 @@ class SeeDoApp(tk.Tk):
         self.after(10, self.tick)      # ~30 FPS engine tick
 
     def refresh_ui(self):
+        if self.controller.new_seedo_created:
+            self.running_tab.build_rows()
+            self.controller.new_seedo_handled()
         self.running_tab.refresh()
         self.after(500, self.refresh_ui)  # refresh every second
 

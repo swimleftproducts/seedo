@@ -21,7 +21,10 @@ class SeeDoManager:
     def add(self, seedo):
         self.seedos.append(seedo)
         self._last_run[seedo] = 0.0
-
+        print('the list of seedos is now')
+        for seedo in self.seedos:
+            print(seedo.name)
+            
     def should_be_run(self, seedo, now):
         return (now - self._last_run[seedo]) >= seedo.interval_sec
 

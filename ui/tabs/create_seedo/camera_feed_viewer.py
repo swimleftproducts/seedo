@@ -88,9 +88,8 @@ class CameraFeedViewer(tk.Frame):
 
     def update_camera_viewer(self):
             #NOTE: need to remove direct use of camera manger
-            camera = self.controller.camera_manager
 
-            if not camera.active:
+            if not self.controller.is_camera_active():
                 self.camera_viewer.create_text(
                     self.width // 2,
                     self.height // 2,
@@ -99,7 +98,7 @@ class CameraFeedViewer(tk.Frame):
                     tags='camera_off'
                 )
             else:
-                frame = camera.latest_frame
+                frame = self.controller.get_latest_frame()
                 if frame is not None:
                     img = Image.fromarray(frame)
                     img = ImageOps.pad(img, (self.width, self.height), color="black")
@@ -130,10 +129,7 @@ class CameraFeedViewer(tk.Frame):
 
                 if self.rect:
                     self.camera_viewer.create_rectangle(self.rect, outline="yellow", width=2)
-
-            
-            
-            
+    
             self.after(33, self.update_camera_viewer)
     
     def on_mouse_down(self, event):
@@ -163,9 +159,7 @@ class CameraFeedViewer(tk.Frame):
         return
     
     def toggle_show_similarities(self):
-        print("Toggling show similarities")
         self.show_similarities = not self.show_similarities
-        print("Show similarities:", self.show_similarities)
         if self.show_similarities:
             self.start_similarity_thread()
         else:
@@ -192,7 +186,7 @@ class CameraFeedViewer(tk.Frame):
                     results[i] = float(sim[0,1])
 
                 self.similarity_results = results
-                time.sleep(0.1)  # 10 fps max
+                time.sleep(0.25)  # 4 fps max
 
         self.similarity_thread = threading.Thread(target=worker, daemon=True)
         self.similarity_thread.start()

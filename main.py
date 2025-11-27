@@ -6,6 +6,7 @@ from core.secrets import load_secrets
 
 
 if __name__ == "__main__":
+    load_secrets()
     controller = AppController()
     app = SeeDoApp(controller)
     setup_button_styles()

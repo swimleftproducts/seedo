@@ -17,11 +17,13 @@ class CreateSeeDo_Semantic_Similarity_Frame(tk.Frame):
         self.roi_padding_offset: tuple = self.roi_padding_offset()
         self.roi_scaling_factor: tuple = self.calculate_roi_scaling_factor()
 
+        # warning message is a list of strings
+        self.warnings = []
         #
         self.semantic_regions = []
         # Each item will have the format
         #  {
-        #   roi: tuple (x1, y1, x2, y2) in captured image coords
+        #   roi: list (tuple (x1, y1, x2, y2)) in captured image coords
         #   embedding: np.ndarray | None = None,
         #   image: Image.Image | None = None
         #   label: str | None = None
@@ -54,6 +56,7 @@ class CreateSeeDo_Semantic_Similarity_Frame(tk.Frame):
         camera_feed.grid(row=1, column=1, sticky="nsew")
 
 
+
         self.semantic_options = SemanticSimilarityOptions(self, controller)
         self.semantic_options.grid(row=1, column=0, rowspan=2, sticky="nsew", padx=10, pady=10)
 
@@ -73,10 +76,53 @@ class CreateSeeDo_Semantic_Similarity_Frame(tk.Frame):
         )
         self.create_seedo_button.grid(row=2, column=1)
 
+        self.label_warnings = tk.Label(
+            self,
+            text='',
+            foreground='red',
+            background='lightblue',
+            font=('Arial', 12, 'bold')
+        )
+        self.label_warnings.place(relx=0.5, rely=1.0, anchor='s')
+        self.label_warnings.bind('<Button-1>', self.clear_warnings)
+        self.after
+
     def save(self):
         options_data = self.semantic_options.build_option_payload()
-        print("options to save:", options_data)
-        pass
+        # validate that a region has been captured
+        if len(self.semantic_regions) == 0:
+            if "No regions captured." not in self.warnings:
+                self.warnings.append("No regions captured.")
+        
+        # validate that all regions have embeddings
+        for region in self.semantic_regions:
+            if region.get('embedding') is None:
+                warning_msg = f"One or more regions have no embedding."
+                if warning_msg not in self.warnings:
+                    self.warnings.append(warning_msg)
+
+        # validate unique name on SeeDo
+        existing_seedo_names  = [seedo.name for seedo in self.controller.seedo_manager.seedos]
+        if options_data['name'] in existing_seedo_names:
+            warning_msg = f"SeeDo name '{options_data['name']}' already exists."
+            if warning_msg not in self.warnings:
+                self.warnings.append(warning_msg)
+
+        # validate
+        if len(self.warnings) > 0:
+            self.label_warnings.config(text=' | '.join(self.warnings))
+            self.after(3000, self.clear_warnings)
+            return
+        
+        # add semantic regions to options data
+        options_data['semantic_regions'] = [(region['roi'], region['image'], region['embedding']) for region in self.semantic_regions]
+
+        self.controller.create_semantic_similarity_seedo(options_data)
+   
+    def clear_warnings(self, event=None):
+        self.warnings = []
+        self.label_warnings.config(text='')
+    
 
     def roi_padding_offset(self):
             """Calculate padding offset for ROI selection based on camera viewer size and
