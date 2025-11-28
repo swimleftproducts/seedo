@@ -111,7 +111,6 @@ class CameraManager:
         if self.cap and self.cap.isOpened():
             self.cap.release()
 
-# ---- stand-alone test runner ----
 if __name__ == "__main__":
     cam = CameraManager(target_fps=15, device_index=0, buffer_seconds=2)
 

@@ -23,7 +23,7 @@ class AppController:
     def __init__(self):
         self.ml_manager = ML_manager()
         self.camera_manager = CameraManager()
-        self.seedo_manager = SeeDoManager(self.ml_manager)
+        self.seedo_manager = SeeDoManager(self.ml_manager, self.camera_manager)
 
         #NOTE: I could see lazy loading of models being better if there are many models
         # and a given model is not used by any SeeDo instances yet.
@@ -35,6 +35,7 @@ class AppController:
         """Heartbeat invoked by UI .after() loop."""
         if self.camera_manager.active:
             self.camera_manager.capture_frame()
+            self.camera_manager.clear_old_videos()
             self.seedo_manager.run(self.camera_manager.latest_frame, time.time())
     # -------- SEEDO CONTROL ---------
 

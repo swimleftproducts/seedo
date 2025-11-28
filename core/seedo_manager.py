@@ -3,9 +3,11 @@ import threading
 from helpers.config_loading import load_all_seedos, save_seedo
 
 class SeeDoManager:
-    def __init__(self, ml_manager):
+    def __init__(self, ml_manager, camera_manger):
         self.ml_manager = ml_manager
+        self.camera_manager = camera_manger
         self.seedos = load_all_seedos()
+        
 
         print(f"SeeDoManager initialized with {len(self.seedos)} SeeDos.")
         # I am not sure this should be initialized to zero. What if a SeeDo have past history?
@@ -60,6 +62,8 @@ class SeeDoManager:
                 if (now - seedo._last_action_time) >= seedo.min_retrigger_interval_sec:
                     seedo._last_action_time = now
                     print(f"[{seedo.name}] Triggered!")
-                    seedo.action.execute({"timestamp": now, "frame": frame})
+
+                    saved_file_path = self.camera_manager.get_and_combine_past_video(10, now)
+                    seedo.action.execute({"timestamp": now, "frame": frame, "saved_file_path": saved_file_path})
                 else:
                     print(f"[{seedo.name}] Retrigger interval not elapsed.")
