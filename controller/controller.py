@@ -1,4 +1,4 @@
-from core.camera_manager import CameraManager
+from core.camera_manager.camera_manager import CameraManager
 from core.seedo_manager import SeeDoManager
 from core.ml.ml_manager import ML_manager
 from core.seedo.seedo import SemanticSimilaritySeeDo

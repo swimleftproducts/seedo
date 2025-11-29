@@ -62,8 +62,8 @@ class SeeDoManager:
                 if (now - seedo._last_action_time) >= seedo.min_retrigger_interval_sec:
                     seedo._last_action_time = now
                     print(f"[{seedo.name}] Triggered!")
-
-                    saved_file_path = self.camera_manager.get_and_combine_past_video(10, now)
+                    time.sleep(3)
+                    saved_file_path = self.camera_manager.get_and_combine_past_video(15, now+5)
                     seedo.action.execute({"timestamp": now, "frame": frame, "saved_file_path": saved_file_path})
                 else:
                     print(f"[{seedo.name}] Retrigger interval not elapsed.")

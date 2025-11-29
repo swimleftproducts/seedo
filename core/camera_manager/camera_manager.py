@@ -5,19 +5,23 @@ import threading
 from queue import Queue   
 import os
 from typing import List
-
+from core.camera_manager.camera_pipeline import select_and_configure_camera
+import timeit
 
 CAM_DATA_DIR ='data/video'
 
 class CameraManager:
     def __init__(self, target_fps=15, device_index=0, buffer_seconds=2):
-        self.cap = cv2.VideoCapture(device_index)
 
         self.target_width = 1280
         self.target_height = 720
 
         self.video_retention_time_sec = 60 
         self.last_video_clear = time.time()
+
+        #select_and_configure_camera()
+
+        self.cap = cv2.VideoCapture(device_index)
 
         # set camera resolution, this will fail silently if unsupported
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.target_width)
@@ -52,22 +56,21 @@ class CameraManager:
         now = time.time()
         #TODO: adding + .01 here gets the fps closer to actually 15. Do I care?
         if (now - self.last_frame_time  )>= (1 / self.target_fps):
+            start = timeit.default_timer()
+
             ret, frame = self.cap.read()
             if ret:
                 # uncomment last line to see actual frame rate
                 #print(f"actual frame rate: {1/(now-self.last_frame_time)}")
                 self.latest_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                self.buffer.append((now, frame.copy()))
 
-                success, jpeg = cv2.imencode(".jpg", frame)
-                if success:
-                    self.buffer.append((now, jpeg.tobytes()))
-
-                    if len(self.buffer) >= self.max_frames:
-                        if not self.saving:
-                            print("Buffer full but not currently saving, clearing buffer.")
-                            self.buffer.clear()
-                        else:
-                            self._initiate_saving()
+                if len(self.buffer) >= self.max_frames:
+                    if not self.saving:
+                        print("Buffer full but not currently saving, clearing buffer.")
+                        self.buffer.clear()
+                    else:
+                        self._initiate_saving()
 
             self.last_frame_time = now
             return self.latest_frame
@@ -107,10 +110,7 @@ class CameraManager:
         filepath = os.path.join(data_dir, filename)
 
 
-        sample_frame = cv2.imdecode(
-            np.frombuffer(buffer_copy[0][1], dtype=np.uint8),
-            cv2.IMREAD_COLOR
-        )
+        sample_frame = buffer_copy[0][1]
         height, width, _ = sample_frame.shape
 
         out = cv2.VideoWriter(
@@ -120,8 +120,7 @@ class CameraManager:
             (width, height)
         )
 
-        for ts, jpeg_bytes in buffer_copy:
-            frame = cv2.imdecode(np.frombuffer(jpeg_bytes, np.uint8), cv2.IMREAD_COLOR)
+        for ts, frame in buffer_copy:
             out.write(frame)
 
         out.release()
@@ -205,7 +204,6 @@ class CameraManager:
         return sorted(matched)
 
 
-
     def combine_avi_segments(self, output_path, avi_files, fps=15):
 
         if not avi_files:
@@ -224,7 +222,7 @@ class CameraManager:
 
         writer = cv2.VideoWriter(
             output_path,
-            cv2.VideoWriter_fourcc(*"MJPG"),
+            cv2.VideoWriter_fourcc(*"mp4v"),
             fps,
             (width, height)
         )
@@ -270,7 +268,7 @@ class CameraManager:
         outfile = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             CAM_DATA_DIR,
-            f"combined_{int(target_start)}_{int(target_end)}.avi"
+            f"combined_{int(target_start)}_{int(target_end)}.mp4"
         )
 
         return self.combine_avi_segments(outfile, selected)

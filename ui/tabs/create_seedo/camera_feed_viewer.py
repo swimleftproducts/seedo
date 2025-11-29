@@ -115,6 +115,8 @@ class CameraFeedViewer(tk.Frame):
                 
                 if self.show_similarities:
                     for i, sim_score in self.similarity_results.items():
+                        if i >= len(self.parent.semantic_regions):
+                            continue  # skip removed region
                         region = self.parent.semantic_regions[i]
                         x1, y1, x2, y2 = region['roi']
                         # apply offset to go from actual image coords to canvas coords
@@ -124,7 +126,7 @@ class CameraFeedViewer(tk.Frame):
                             y2 + 15,
                             text=f"Sim: {sim_score:.2f}",
                             fill="yellow",
-                            font=("Helvetica", 12)
+                            font=("Helvetica", 24)
                         )
 
                 if self.rect:

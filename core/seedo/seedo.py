@@ -197,7 +197,7 @@ class BrightnessSeeDo(SeeDo):
     def config_schema(cls):
         return BrightnessConfigSchema
 
-    def evaluate(self, frame, timestamp):
+    def evaluate(self, frame, timestamp, ml_manager):
         if frame is None:
             return False
         brightness = frame.mean()
