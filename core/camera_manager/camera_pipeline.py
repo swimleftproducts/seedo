@@ -4,7 +4,7 @@ import cv2
 
 CAMERA_TYPE = get_secret('CAMERA_TYPE')
 
-def get_camera_pipline():
+def get_camera_pipeline():
   if CAMERA_TYPE == "pi":
     return CameraCapturePi
   else:

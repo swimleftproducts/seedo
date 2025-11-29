@@ -5,7 +5,7 @@ import threading
 from queue import Queue   
 import os
 from typing import List
-from core.camera_manager.camera_pipeline import select_and_configure_camera
+from core.camera_manager.camera_pipeline import get_camera_pipeline
 import timeit
 
 CAM_DATA_DIR ='data/video'
@@ -21,13 +21,10 @@ class CameraManager:
 
         #select_and_configure_camera()
 
-        self.cap = cv2.VideoCapture(device_index)
+        pipeline_class = get_camera_pipeline()
 
+        self.cap = pipeline_class(self.target_width, self.target_height,0)
         # set camera resolution, this will fail silently if unsupported
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.target_width)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.target_height)
-
-        print("Actual camera resolution:", self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), "x", self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         self.target_fps = target_fps
         self.last_frame_time = 0
