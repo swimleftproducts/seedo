@@ -2,9 +2,10 @@ from core.secrets import get_secret
 import numpy as np
 import cv2
 
-CAMERA_TYPE = get_secret('CAMERA_TYPE')
 
 def get_camera_pipeline():
+  CAMERA_TYPE = get_secret('CAMERA_TYPE')
+  print(CAMERA_TYPE)
   if CAMERA_TYPE == "PI":
     return CameraCapturePi
   else:
