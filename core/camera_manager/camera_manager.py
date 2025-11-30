@@ -11,7 +11,7 @@ import timeit
 CAM_DATA_DIR ='data/video'
 
 class CameraManager:
-    def __init__(self, target_fps=15, device_index=0, buffer_seconds=2):
+    def __init__(self, target_fps=10, device_index=0, buffer_seconds=2):
 
         self.target_width = 1280
         self.target_height = 720

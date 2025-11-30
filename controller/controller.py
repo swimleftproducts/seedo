@@ -36,6 +36,7 @@ class AppController:
         if self.camera_manager.active:
             self.camera_manager.capture_frame()
             self.camera_manager.clear_old_videos()
+            # Is this using the old frame and running it twice?
             self.seedo_manager.run(self.camera_manager.latest_frame, time.time())
     # -------- SEEDO CONTROL ---------
 

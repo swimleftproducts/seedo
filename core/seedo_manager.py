@@ -7,7 +7,7 @@ class SeeDoManager:
         self.ml_manager = ml_manager
         self.camera_manager = camera_manger
         self.seedos = load_all_seedos()
-        
+        self.last_frame_considered = None
 
         print(f"SeeDoManager initialized with {len(self.seedos)} SeeDos.")
         # I am not sure this should be initialized to zero. What if a SeeDo have past history?
@@ -42,6 +42,14 @@ class SeeDoManager:
         """Called from AppController.tick()"""
         if frame is None:
             return
+
+        if frame is self.last_frame_considered:
+            print('RUN: frame is same as last')
+            return
+        
+        print("RUN getting new frame")
+        
+        self.last_frame_considered = frame
 
         for seedo in self.seedos:
             if seedo.enabled and self.should_be_run(seedo, now):
