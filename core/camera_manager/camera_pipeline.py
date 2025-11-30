@@ -5,6 +5,8 @@ import cv2
 
 def get_camera_pipeline():
   CAMERA_TYPE = get_secret('CAMERA_TYPE')
+  HEIGHT = get_secret('HEIGHT')
+  WIDTH = get_secret('WIDTH')
   print(CAMERA_TYPE)
   if CAMERA_TYPE == "PI":
     return CameraCapturePi

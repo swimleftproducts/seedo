@@ -54,13 +54,19 @@ def save_seedo(seedo):
     data = seedo.to_dict()
     dir_name = f"{data['name'].replace(' ', '_').lower()}"
     filename = f"{dir_name}.json"
-    dir_and_file = dir_name+ '/'+filename
-    path = os.path.join(CONFIG_PATH, dir_and_file)
 
-    with open(path, "w") as f:
-         json.dump(data, f, indent=2)
+    # Build full path
+    full_dir_path = os.path.join(CONFIG_PATH, dir_name)
+    full_file_path = os.path.join(full_dir_path, filename)
 
-    print(f"Saved SeeDo to {path}")
+    # Ensure directory exists
+    os.makedirs(full_dir_path, exist_ok=True)
+
+    # Write file
+    with open(full_file_path, "w") as f:
+        json.dump(data, f, indent=2)
+
+    print(f"Saved SeeDo to {full_file_path}")
 
 
 if __name__ == "__main__":
