@@ -49,7 +49,7 @@ class SeeDoApp(tk.Tk):
     def tick(self):
         """Master tick function. UI drives time, controller performs work."""
         self.controller.tick()
-        self.after(10, self.tick)      # ~30 FPS engine tick
+        self.after(20, self.tick)      # ~30 FPS engine tick
 
     def refresh_ui(self):
         if self.controller.new_seedo_created:
