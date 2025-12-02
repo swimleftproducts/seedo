@@ -19,7 +19,7 @@ config = picam2.create_preview_configuration(
     controls={"FrameDurationLimits": (16666, 16666)}
 )
 
-config = picam2.align_configuration(config)
+picam2.align_configuration(config)
 print("cONFIG IS" , config)
 picam2.configure(config)
 picam2.start()
