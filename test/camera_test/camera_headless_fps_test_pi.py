@@ -8,8 +8,8 @@ from picamera2 import Picamera2
 FILE_OUT = "test/camera_test/fps_test.csv"
 DURATION_SEC = 30
 WINDOW_SEC = 5
-DESIRED_WIDTH = 640
-DESIRED_HEIGHT = 480
+DESIRED_WIDTH = 1280
+DESIRED_HEIGHT = 720
 
 # ---- Setup camera ----
 picam2 = Picamera2()
