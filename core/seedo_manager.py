@@ -44,11 +44,8 @@ class SeeDoManager:
             return
 
         if frame is self.last_frame_considered:
-            print('RUN: frame is same as last')
             return
-        
-        print("RUN getting new frame")
-        
+                
         self.last_frame_considered = frame
 
         for seedo in self.seedos:
@@ -70,7 +67,7 @@ class SeeDoManager:
                 if (now - seedo._last_action_time) >= seedo.min_retrigger_interval_sec:
                     seedo._last_action_time = now
                     print(f"[{seedo.name}] Triggered!")
-                    time.sleep(5)
+                    time.sleep(7)
                     saved_file_path = self.camera_manager.get_and_combine_past_video(15, now+5)
                     seedo.action.execute({"timestamp": now, "frame": frame, "saved_file_path": saved_file_path})
                 else:
