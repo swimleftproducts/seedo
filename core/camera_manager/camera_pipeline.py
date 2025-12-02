@@ -1,7 +1,7 @@
 from core.secrets import get_secret
 import numpy as np
 import cv2
-
+from typing import TYPE_CHECKING
 
 def get_camera_pipeline():
   CAMERA_TYPE = get_secret('CAMERA_TYPE')
@@ -57,11 +57,13 @@ class CameraCaptureUSB(CameraCapture):
     self.cap.release()
   
 
-class CameraCapturePi(CameraCapture):
+class CameraCapturePi(CameraCapture):    
     def __init__(self, desired_width, desired_height, device_index=0):
         from picamera2 import Picamera2
 
         self.cap = Picamera2()
+
+        self._is_open = True
 
         # Create configuration using requested size
         config = self.cap.create_preview_configuration(
@@ -87,10 +89,10 @@ class CameraCapturePi(CameraCapture):
         return True, frame
 
     def isOpened(self):
-        return self.isOpened
+        return self._is_open
 
     def release(self):
-        self.isOpened = False
+        self._is_open = False
         print("[PI CAMERA] Releasing camera")
         self.cap.stop()
         self.cap.close()
