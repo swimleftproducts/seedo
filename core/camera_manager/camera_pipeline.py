@@ -71,7 +71,7 @@ class CameraCapturePi(CameraCapture):
         )
 
         # Align configuration to hardware-supported modes
-        config = self.cap.align_configuration(config)
+        self.cap.align_configuration(config)
 
         # Apply config and start camera
         self.cap.configure(config)
