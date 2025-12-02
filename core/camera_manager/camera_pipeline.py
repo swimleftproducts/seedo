@@ -61,8 +61,6 @@ class CameraCapturePi(CameraCapture):
     def __init__(self, desired_width, desired_height, device_index=0):
         from picamera2 import Picamera2
 
-        self.isOpened = True
-
         self.cap = Picamera2()
 
         # Create configuration using requested size
