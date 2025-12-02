@@ -20,7 +20,6 @@ config = picam2.create_preview_configuration(
 )
 
 picam2.align_configuration(config)
-print("cONFIG IS" , config)
 picam2.configure(config)
 picam2.start()
 
