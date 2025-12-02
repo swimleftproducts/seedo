@@ -15,8 +15,10 @@ DESIRED_HEIGHT = 480
 picam2 = Picamera2()
 
 config = picam2.create_preview_configuration(
-    main={"size": (DESIRED_WIDTH, DESIRED_HEIGHT)}  # (width, height)
+    main={"size": (DESIRED_WIDTH, DESIRED_HEIGHT)},  # (width, height)
+    controls={"FrameRate": 30}
 )
+
 config = picam2.align_configuration(config)
 picam2.configure(config)
 picam2.start()
