@@ -16,7 +16,7 @@ picam2 = Picamera2()
 
 config = picam2.create_preview_configuration(
     main={"size": (DESIRED_WIDTH, DESIRED_HEIGHT)},  # (width, height)
-    controls={"FrameRate": 30}
+    controls={"FrameDurationLimits": (33333, 33333)}
 )
 
 config = picam2.align_configuration(config)
