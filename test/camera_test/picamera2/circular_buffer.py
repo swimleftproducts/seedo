@@ -70,10 +70,12 @@ while True:
     fps = 1/(now-last_time)
     last_time = now
     
+    print('fps is : ', fps)
+
     cv2.putText(
         lores_frame,
         f"FPS: {fps:.1f}",
-        (10, 30),
+        (30, 50),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.8,
         (0, 255, 0),
