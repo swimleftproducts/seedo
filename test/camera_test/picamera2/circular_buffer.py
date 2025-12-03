@@ -45,6 +45,7 @@ start_time = time.time()
 
 last_time = time.time()
 
+counter = 0
 while True:
     
     # Grab lores frame from Picamera2
@@ -55,11 +56,12 @@ while True:
 
     # Check if we should close the first file and open the second
     if time.time() - start_time > 5:
-        print("Closing start.mp4 and switching to end.mp4...")
-        circular.close_output()
-        circular.open_output(PyavOutput("end.mp4"))
-        break
-
+        start_time = time.time()
+        circular.open_output(PyavOutput(f'{counter}.mp4'))
+        counter+= 1
+        if counter > 3:
+            break
+        
     # Quit with 'q'
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
@@ -73,24 +75,25 @@ while True:
     print('fps is : ', fps)
 
 
-# -----------------------------
-# Continue recording for the second file
-# -----------------------------
-end_start = time.time()
-while True:
-    lores_frame = picam2.capture_array("lores")
-    cv2.imshow("Lores Preview", lores_frame)
+# # -----------------------------
+# # Continue recording for the second file
+# # -----------------------------
+# end_start = time.time()
+# while True:
+#     lores_frame = picam2.capture_array("lores")
+#     cv2.imshow("Lores Preview", lores_frame)
 
-    if time.time() - end_start > 5:
-        print("Closing end.mp4...")
-        circular.close_output()
-        break
+#     if time.time() - end_start > 5:
+#         print("Closing end.mp4...")
+#         circular.close_output()
+#         break
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+#     if cv2.waitKey(1) & 0xFF == ord('q'):
+#         break
 
-# -----------------------------
-# Cleanup
-# -----------------------------
+# # -----------------------------
+# # Cleanup
+# # -----------------------------
+circular.close_output()
 picam2.stop_recording()
 cv2.destroyAllWindows()
