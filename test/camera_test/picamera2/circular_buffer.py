@@ -64,7 +64,7 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
     
-    time.sleep(.015)
+    time.sleep(.025)
 
     now = time.time()
     fps = 1/(now-last_time)
