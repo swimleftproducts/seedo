@@ -47,8 +47,6 @@ last_time = time.time()
 
 while True:
     
-
-
     # Grab lores frame from Picamera2
     lores_frame = picam2.capture_array("lores")
 
@@ -65,6 +63,8 @@ while True:
     # Quit with 'q'
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+    
+    time.sleep(.015)
 
     now = time.time()
     fps = 1/(now-last_time)
@@ -72,16 +72,7 @@ while True:
     
     print('fps is : ', fps)
 
-    cv2.putText(
-        lores_frame,
-        f"FPS: {fps:.1f}",
-        (30, 50),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.8,
-        (0, 255, 0),
-        2,
-        cv2.LINE_AA
-    )
+
 # -----------------------------
 # Continue recording for the second file
 # -----------------------------
