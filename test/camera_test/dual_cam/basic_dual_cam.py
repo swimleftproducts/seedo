@@ -1,42 +1,38 @@
 import cv2
-from picamera2 import Picamera2
 import numpy as np
+from picamera2 import Picamera2
 
-# --- Initialize two Pi cameras ---
-cam1 = Picamera2()
-cam2 = Picamera2()
+# --- Initialize two cameras ---
+cam0 = Picamera2(0)
+cam1 = Picamera2(1)
 
-# Configure both cameras
+config0 = cam0.create_video_configuration(main={"size": (640, 480), "format": "RGB888"})
 config1 = cam1.create_video_configuration(main={"size": (640, 480), "format": "RGB888"})
-config2 = cam2.create_video_configuration(main={"size": (640, 480), "format": "RGB888"})
 
+cam0.configure(config0)
 cam1.configure(config1)
-cam2.configure(config2)
 
+cam0.start()
 cam1.start()
-cam2.start()
-
-import time
-time.sleep(2)
 
 while True:
-    # grab frames from both cameras
+    # Grab frames
+    f0 = cam0.capture_array()
     f1 = cam1.capture_array()
-    f2 = cam2.capture_array()
 
-    # Resize if needed to match (optional)
-    h = min(f1.shape[0], f2.shape[0])
+    # Resize or match height if needed
+    h = min(f0.shape[0], f1.shape[0])
+    f0 = cv2.resize(f0, (640, h))
     f1 = cv2.resize(f1, (640, h))
-    f2 = cv2.resize(f2, (640, h))
 
-    # --- Combine side-by-side ---
-    combined = np.hstack((f1, f2))   # left | right
+    # Combine side-by-side
+    combined = np.hstack((f0, f1))
 
-    cv2.imshow("Dual PiCam View", combined)
+    cv2.imshow("Dual Pi Cameras", combined)
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if cv2.waitKey(1) == ord('q'):
         break
 
+cam0.stop()
 cam1.stop()
-cam2.stop()
 cv2.destroyAllWindows()
