@@ -11,7 +11,7 @@ import timeit
 CAM_DATA_DIR ='data/video'
 
 class CameraManager:
-    def __init__(self, target_fps=10, device_index=0, buffer_seconds=2):
+    def __init__(self, target_fps=30, device_index=0, buffer_seconds=2):
 
         self.target_width = 1280
         self.target_height = 720
@@ -19,7 +19,6 @@ class CameraManager:
         self.video_retention_time_sec = 60 
         self.last_video_clear = time.time()
 
-        #select_and_configure_camera()
 
         pipeline_class = get_camera_pipeline()
 
@@ -58,7 +57,7 @@ class CameraManager:
             ret, frame = self.cap.read()
             if ret:
                 # uncomment last line to see actual frame rate
-                #print(f"actual frame rate: {1/(now-self.last_frame_time)}")
+                print(f"actual frame rate: {1/(now-self.last_frame_time)}")
                 self.latest_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 self.buffer.append((now, frame.copy()))
 
@@ -173,7 +172,6 @@ class CameraManager:
         else:
             print("Cleanup complete: no old files found.")
 
-    
     def _list_video_files_by_time(self, start: float, end: float) -> List[str]:
         """Return full paths to video files whose timestamps overlap [start, end]."""
         BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -199,7 +197,6 @@ class CameraManager:
                 matched.append(os.path.join(data_dir, f))
 
         return sorted(matched)
-
 
     def combine_avi_segments(self, output_path, avi_files, fps=15):
 
