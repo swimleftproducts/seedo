@@ -20,6 +20,9 @@ while True:
     f0 = cam0.capture_array()
     f1 = cam1.capture_array()
 
+    f0 = cv2.flip(f0, 0)
+    f1 = cv2.flip(f1, 0)
+
     # Resize or match height if needed
     h = min(f0.shape[0], f1.shape[0])
     f0 = cv2.resize(f0, (640, h))
