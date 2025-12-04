@@ -6,8 +6,8 @@ from picamera2 import Picamera2
 cam0 = Picamera2(0)
 cam1 = Picamera2(1)
 
-config0 = cam0.create_video_configuration(main={"size": (640, 480), "format": "RGB888"})
-config1 = cam1.create_video_configuration(main={"size": (640, 480), "format": "RGB888"})
+config0 = cam0.create_video_configuration(main={"size": (4608, 2592), "format": "RGB888"})
+config1 = cam1.create_video_configuration(main={"size": (4608, 2592), "format": "RGB888"})
 
 cam0.configure(config0)
 cam1.configure(config1)
