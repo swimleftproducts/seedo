@@ -24,9 +24,11 @@ while True:
     f1 = cv2.flip(f1, 0)
 
     # Resize or match height if needed
-    h = min(f0.shape[0], f1.shape[0])
-    f0 = cv2.resize(f0, (640, h))
-    f1 = cv2.resize(f1, (640, h))
+    h, w = f0.shape[:2]
+    scale = 640 / w
+    f0 = cv2.resize(f0, (640, int(h * scale)))
+
+    f1 = cv2.resize(f1, (640, int(h * scale)))
 
     # Combine side-by-side
     combined = np.hstack((f0, f1))
