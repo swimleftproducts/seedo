@@ -31,7 +31,7 @@ while True:
     f1 = cv2.resize(f1, (640, int(h * scale)))
 
     # Combine side-by-side
-    combined = np.hstack((f0, f1))
+    combined = np.hstack((f1, f0))
 
     cv2.imshow("Dual Pi Cameras", combined)
 
