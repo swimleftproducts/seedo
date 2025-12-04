@@ -16,6 +16,9 @@ cam2.configure(config2)
 cam1.start()
 cam2.start()
 
+import time
+time.sleep(2)
+
 while True:
     # grab frames from both cameras
     f1 = cam1.capture_array()
