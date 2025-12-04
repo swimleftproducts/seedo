@@ -57,7 +57,7 @@ class CameraManager:
             ret, frame = self.cap.read()
             if ret:
                 # uncomment last line to see actual frame rate
-                print(f"actual frame rate: {1/(now-self.last_frame_time)}")
+                #print(f"actual frame rate: {1/(now-self.last_frame_time)}")
                 self.latest_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 self.buffer.append((now, frame.copy()))
 
@@ -68,7 +68,9 @@ class CameraManager:
                     else:
                         self._initiate_saving()
 
-            self.last_frame_time = now
+            self.last_frame_time = time.time()
+            end = timeit.default_timer()
+            print('time spent in capture', end-start)
             return self.latest_frame
         else:
             return self.latest_frame
