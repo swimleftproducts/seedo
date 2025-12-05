@@ -5,8 +5,8 @@ import glob
 # =========================
 # Calibration Settings
 # =========================
-CHECKERBOARD = (7, 9)     # inner corner count
-SQUARE_SIZE = 20.32       # mm per square
+CHECKERBOARD = (9, 13)     # inner corner count
+SQUARE_SIZE =   14.4     # mm per square
 
 # convert to meters if desired
 SQUARE_SIZE_M = SQUARE_SIZE / 1000.0
