@@ -28,8 +28,8 @@ while True:
     frameR = camR.capture_array()
 
     # optional flip if your cameras are upside down
-    # frameL = cv2.flip(frameL, 0)
-    # frameR = cv2.flip(frameR, 0)
+    frameL = cv2.flip(frameL, 0)
+    frameR = cv2.flip(frameR, 0)
 
     # show preview side-by-side
     preview = cv2.resize(frameL, (640,360)), cv2.resize(frameR, (640,360))
