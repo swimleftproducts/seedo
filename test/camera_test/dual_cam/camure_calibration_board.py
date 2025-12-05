@@ -5,8 +5,8 @@ from picamera2 import Picamera2
 SAVE_DIR = "captures"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
-camL = Picamera2(0)
-camR = Picamera2(1)
+camL = Picamera2(1)
+camR = Picamera2(0)
 
 # choose resolution (change if needed)
 config = {"size": (1536, 864), "format": "RGB888"}
