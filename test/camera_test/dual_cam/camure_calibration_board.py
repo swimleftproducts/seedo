@@ -40,8 +40,8 @@ while True:
     key = cv2.waitKey(1)
 
     if key == 13:  # ENTER key
-        left_path = f"{SAVE_DIR}/left_{counter:03d}.jpg"
-        right_path = f"{SAVE_DIR}/right_{counter:03d}.jpg"
+        left_path = f"{SAVE_DIR}/left_{counter:03d}a.jpg"
+        right_path = f"{SAVE_DIR}/right_{counter:03d}a.jpg"
 
         cv2.imwrite(left_path, frameL)
         cv2.imwrite(right_path, frameR)
