@@ -24,3 +24,6 @@ test/**/*.onnx.data     # also ignore sharded weight blobs
 
 
 *.pthtest/ml_depth_map/Depth-Anything-V2/*.onnx*
+*.onnx.data
+*.onnx
+*.pth
