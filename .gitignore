@@ -14,3 +14,13 @@
 
 # Ignore Python cache files
 __pycache__/
+
+
+depth_pro_checkpoints
+
+# Ignore all .onnx files inside test/ directory (recursively)
+test/**/*.onnx
+test/**/*.onnx.data     # also ignore sharded weight blobs
+
+
+*.pth
