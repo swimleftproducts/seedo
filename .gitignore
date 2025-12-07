@@ -27,3 +27,6 @@ test/**/*.onnx.data     # also ignore sharded weight blobs
 *.onnx.data
 *.onnx
 *.pth
+
+
+models/
