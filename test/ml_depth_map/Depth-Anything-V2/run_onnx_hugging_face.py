@@ -104,7 +104,6 @@ def click(event, x, y, flags, param):
 # ---------- Windows ----------
 cv2.namedWindow("Depth Map", cv2.WINDOW_NORMAL)
 
-cv2.imshow("Image", orig)
 cv2.imshow("Depth Map", depth_display)  # <-- use display image here!
 cv2.setMouseCallback("Depth Map", click)
 
