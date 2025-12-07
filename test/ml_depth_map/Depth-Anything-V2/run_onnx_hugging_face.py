@@ -82,18 +82,36 @@ if args.location:
     x,y = map(int,args.location.split(","))
     print(f"\nDepth at ({x},{y}) = {depth_resized[y,x]:.6f}\n")
     exit()
+# Create depth visualization for display (scaled down only for showing)
+DISPLAY_W, DISPLAY_H = 640, 480
+depth_display = cv2.resize(depth_show, (DISPLAY_W, DISPLAY_H))
 
-# Click viewer
-def click(event,x,y,flags,param):
-    if event==cv2.EVENT_LBUTTONDOWN:
-        print(f"({x},{y}) → depth={depth_resized[y,x]:.6f}")
-        img2 = depth_show.copy()
-        cv2.circle(img2,(x,y),4,(0,255,0),-1)
-        cv2.imshow("Depth Map",img2)
+# ---------- Click callback ----------
+def click(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        # convert FROM display coords TO real depth coords
+        scale_x = depth_resized.shape[1] / DISPLAY_W
+        scale_y = depth_resized.shape[0] / DISPLAY_H
+        ox = int(x * scale_x)
+        oy = int(y * scale_y)
 
-cv2.imshow("Image",orig)
-cv2.imshow("Depth Map",depth_show)
-cv2.setMouseCallback("Depth Map",click)
-print("\nClick depth-map window to sample values.")
-cv2.waitKey(0)
+        # safety clamp to avoid boundary crash
+        ox = min(max(0, ox), depth_resized.shape[1]-1)
+        oy = min(max(0, oy), depth_resized.shape[0]-1)
+
+        print(f"Clicked ({ox},{oy})  depth={depth_resized[oy,ox]:.5f}")
+
+# ---------- Windows ----------
+cv2.namedWindow("Depth Map", cv2.WINDOW_NORMAL)
+
+cv2.imshow("Image", orig)
+cv2.imshow("Depth Map", depth_display)  # <-- use display image here!
+cv2.setMouseCallback("Depth Map", click)
+
+print("\nClick depth-map window to sample values. Press Q to exit.\n")
+
+while True:
+    if cv2.waitKey(16) & 0xFF == ord('q'):
+        break
+
 cv2.destroyAllWindows()
