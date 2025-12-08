@@ -3,103 +3,153 @@ import numpy as np
 import cv2
 import argparse
 from huggingface_hub import hf_hub_download
-from pathlib import Path
-import os
-import time
+import os, time
 
+# Optional PiCamera2 support
+try:
+    from picamera2 import Picamera2
+except ImportError:
+    Picamera2 = None
+
+
+# ------------------------------------------------------------
+# CLI ARGS
+# ------------------------------------------------------------
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", type=str, default="small")
+parser.add_argument("--camera", type=str, choices=["opencv","pi"], default="opencv",
+                    help="Select camera backend: opencv or pi")
 args = parser.parse_args()
 
-# -------- Select model --------
-if args.model == 'small':
-    model = 'depth_anything_vits.onnx'
+
+# ------------------------------------------------------------
+# Model selection & download
+# ------------------------------------------------------------
+if args.model == "small":
+    model = "depth_anything_vits.onnx"
 else:
-    raise ValueError("Model not found. Use --model small")
+    raise ValueError("Unknown model. Use --model small")
 
-# -------- Resolve model dir --------
-MODELS_DIR = 'models'
-CWD = os.getcwd()
-MODELS_SOURCE = os.path.join(CWD, MODELS_DIR)
 
-print("\nChecking HuggingFace for model...")
-
-onnx_path = hf_hub_download(
-    repo_id='swimleft/depth-anything-seedo',
+MODELS_DIR = "models"
+MODEL_PATH = hf_hub_download(
+    repo_id="swimleft/depth-anything-seedo",
     filename=model,
-    local_dir=str(MODELS_SOURCE)
+    local_dir=MODELS_DIR
+)
+hf_hub_download(
+    repo_id="swimleft/depth-anything-seedo",
+    filename=model + ".data",
+    local_dir=MODELS_DIR
 )
 
-data_file = model + ".data"
-data_path = hf_hub_download(
-    repo_id='swimleft/depth-anything-seedo',
-    filename=data_file,
-    local_dir=str(MODELS_SOURCE)
-)
+print(f"\nModel loaded from: {MODEL_PATH}")
 
-print(f"Model files ready:\n  {onnx_path}\n  {data_path}")
+session = ort.InferenceSession(str(MODEL_PATH))
 
-# Load ONNX session
-session = ort.InferenceSession(str(onnx_path))
 
-# -------- Depth Inference --------
+# ------------------------------------------------------------
+# Depth processing
+# ------------------------------------------------------------
 def get_depth_map(img: np.ndarray):
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # <-- convert to RGB!
-    img_resized = cv2.resize(img, (518,518))
-    inp = np.transpose(img_resized.astype(np.float32)/255, (2,0,1))[None]
-    depth = session.run(None, {"input": inp})[0][0]  # (518,518)
-    return depth
+    # Convert BGR → RGB for ONNX model
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-def depth_to_display(depth: np.ndarray) -> np.ndarray:
+    # Resize once for model
+    img = cv2.resize(img, (518, 518))
+
+    # Normalize + reorder (FAST)
+    inp = np.transpose(img.astype(np.float32) / 255.0, (2,0,1))[None]
+
+    depth = session.run(None, {"input": inp})[0][0]
+    return depth     # raw float map (518x518)
+
+
+def depth_to_display(depth: np.ndarray):
     depth_norm = cv2.normalize(depth, None, 0, 255, cv2.NORM_MINMAX)
     return depth_norm.astype(np.uint8)
 
-# -------- Camera Setup --------
-cap = cv2.VideoCapture(0)
 
-# Try for higher fps
-cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-cap.set(cv2.CAP_PROP_FPS, 60)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+# ------------------------------------------------------------
+# Camera setup
+# ------------------------------------------------------------
+def init_camera():
+    if args.camera == "opencv":
+        cap = cv2.VideoCapture(0)
+        cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+        cap.set(cv2.CAP_PROP_FPS, 60)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        return cap
 
+    if args.camera == "pi":
+        if Picamera2 is None:
+            raise ImportError("Install Picamera2 first: pip install picamera2")
+
+        cam = Picamera2()
+        cam.configure(cam.create_preview_configuration(main={"size": (1280,720)}))
+        cam.start()
+        return cam
+
+
+def read_frame(camera):
+    """Return a BGR numpy frame regardless of backend."""
+    if args.camera == "opencv":
+        ret, frame = camera.read()
+        return frame if ret else None
+
+    if args.camera == "pi":
+        frame = camera.capture_array()
+        return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Pi → BGR like OpenCV
+
+
+# ------------------------------------------------------------
+# Main Loop
+# ------------------------------------------------------------
+camera = init_camera()
 prev = time.time()
 frames = 0
 fps = 0
 
-# -------- Main Loop --------
+print("\nStarting depth stream... Press 'q' to exit.\n")
+
 while True:
-    ret, frame = cap.read()
-    if not ret:
-        print("Capture failed.")
+    frame = read_frame(camera)
+    if frame is None:
+        print("Camera read failed.")
         break
 
-    frame = cv2.resize(frame, (518,518))
     depth = get_depth_map(frame)
     depth_disp = depth_to_display(depth)
     depth_color = cv2.applyColorMap(depth_disp, cv2.COLORMAP_MAGMA)
 
-    # FPS counter update
+    # Resize only ONCE for display
+    frame_display = cv2.resize(frame,(518,518))
+
+    # FPS update
     frames += 1
     now = time.time()
-    dt = now - prev
-    if dt >= 1.0:
-        fps = frames / dt
+    if now - prev >= 1.0:
+        fps = frames / (now - prev)
         print(f"FPS: {fps:.2f}")
         frames = 0
         prev = now
 
-    # Overlay FPS text
-    cv2.putText(frame, f"FPS: {fps:.2f}", (10, 30),
+    cv2.putText(frame_display, f"{fps:.1f} FPS", (10,30),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
 
-    # Stack side by side
-    combined = np.hstack((frame, depth_color))
-
-    cv2.imshow("Camera + Depth", combined)
+    combined = np.hstack((frame_display, depth_color))
+    cv2.imshow("RGB + Depth", combined)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-cap.release()
+
+# ------------------------------------------------------------
+# Cleanup
+# ------------------------------------------------------------
+if args.camera == "opencv":
+    camera.release()
+
 cv2.destroyAllWindows()
+print("Exit complete.")
