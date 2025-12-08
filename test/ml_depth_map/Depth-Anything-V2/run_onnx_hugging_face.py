@@ -70,7 +70,7 @@ depth = session.run(None, {"input": inp})[0][0]
 # Normalize for display only
 depth_norm = (depth-depth.min())/(depth.max()-depth.min())
 depth_vis = (depth_norm*255).astype(np.uint8)
-depth_col = cv2.applyColorMap(depth_vis, cv2.COLORMAP_MAGMA)
+depth_col = depth_vis
 
 # Resize for lookup
 H,W = orig.shape[:2]
