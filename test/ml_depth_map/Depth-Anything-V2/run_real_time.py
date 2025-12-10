@@ -27,6 +27,8 @@ args = parser.parse_args()
 # ------------------------------------------------------------
 if args.model == "small":
     model = "depth_anything_vits.onnx"
+elif args.model == 'fp16':
+    model = "depth_anything_vits_fp16.onnx"
 else:
     raise ValueError("Unknown model. Use --model small")
 
@@ -45,7 +47,16 @@ hf_hub_download(
 
 print(f"\nModel loaded from: {MODEL_PATH}")
 
-session = ort.InferenceSession(str(MODEL_PATH))
+so = ort.SessionOptions()
+so.intra_op_num_threads = os.cpu_count()     # threads inside one op
+so.inter_op_num_threads = os.cpu_count()     # parallel ops scheduling
+
+session = ort.InferenceSession(
+    MODEL_PATH,
+    sess_options=so,
+    providers=["CPUExecutionProvider"]  # or CoreMLExecutionProvider first
+)
+#session = ort.InferenceSession(str(MODEL_PATH))
 
 
 # ------------------------------------------------------------
@@ -60,8 +71,10 @@ def get_depth_map(img: np.ndarray):
 
     # Normalize + reorder (FAST)
     inp = np.transpose(img.astype(np.float32) / 255.0, (2,0,1))[None]
-
+    start = time.time()
     depth = session.run(None, {"input": inp})[0][0]
+    end = time.time()
+    print('inference took: ', end -start)
     return depth     # raw float map (518x518)
 
 
