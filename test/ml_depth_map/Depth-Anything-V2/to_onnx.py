@@ -13,7 +13,7 @@ model = DepthAnythingV2(**model_configs[encoder])
 model.load_state_dict(torch.load(checkpoint, map_location="cpu"))
 model.eval()
 
-dummy = torch.randn(1, 3, 518, 518)  # use your input size
+dummy = torch.randn(1, 3, 378, 378)  # use your input size
 fp16=''
 
 #convert to fp16 if wanted
@@ -24,7 +24,7 @@ fp16=''
 torch.onnx.export(
     model,
     dummy,
-    f"depth_anything_{encoder}{fp16}.onnx",
+    f"depth_anything_{encoder}{fp16}_378.onnx",
     input_names=["input"],
     output_names=["depth"],
     opset_version=18,

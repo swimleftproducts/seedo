@@ -44,4 +44,4 @@ depth = (cmap(depth)[:, :, :3] * 255)[:, :, ::-1].astype(np.uint8)
 split_region = np.ones((img.shape[0], 50, 3), dtype=np.uint8) * 255
 combined_result = cv2.hconcat([img, split_region, depth])
 
-cv2.imwrite('low_res_output.jpg', combined_result)
+cv2.imwrite('low_res_output_518.jpg', combined_result)

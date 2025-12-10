@@ -23,8 +23,12 @@ inp = img_resized.astype(np.float32) / 255.0
 inp = np.transpose(inp, (2,0,1))[None]
 
 # ------------------ Run Model ------------------
+import time
+start = time.time()
 depth = session.run(None, {"input": inp})[0][0]
+end = time.time()
 
+print('Inference took : ', end -start)
 # Normalize for visualization
 depth_norm = (depth - depth.min()) / (depth.max() - depth.min())
 depth_vis = (depth_norm * 255).astype(np.uint8)
