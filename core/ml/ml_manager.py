@@ -5,6 +5,8 @@ from PIL import Image
 class ML_manager:
    def __init__(self):
       self.mobile_net_v3 = None
+      self.depth_anything_v2_vits_518 = None
+      self.depth_anything_v2_vits_378 = None
    
    def Load_MobileNetV3(self):
       self.mobile_net_v3 = MobileNetV3()

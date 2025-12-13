@@ -24,7 +24,8 @@ class AppController:
         self.ml_manager = ML_manager()
         self.camera_manager = CameraManager()
         self.seedo_manager = SeeDoManager(self.ml_manager, self.camera_manager)
-
+        import pdb
+        pdb.set_trace()
         #NOTE: I could see lazy loading of models being better if there are many models
         # and a given model is not used by any SeeDo instances yet.
         self.ml_manager.Load_MobileNetV3()

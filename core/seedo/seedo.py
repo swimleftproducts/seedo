@@ -15,7 +15,8 @@ EMBEDDING_SAVE_FOLDER_BASE = 'data/seedo_config'
 IMAGE_SAVE_FOLDER_BASE = 'data/seedo_config'
 
 class SeeDo:
-    def __init__(self, name, interval_sec, min_retrigger_interval_sec, action: Action, enabled=True):
+    def __init__(self, type, name, interval_sec, min_retrigger_interval_sec, action: Action, enabled=True):
+        self.type = type
         self.name = name
         self.interval_sec = interval_sec
         self.min_retrigger_interval_sec = min_retrigger_interval_sec
@@ -69,8 +70,8 @@ class SeeDo:
     
 class SemanticSimilaritySeeDo(SeeDo):
     """A seedo that compares semantic similarity of regions in the frame to reference embeddings."""
-    def __init__(self, name, interval_sec, min_retrigger_interval_sec, semantic_regions: List[SemanticSimilarityConfigSchema], action, enabled=True):
-        super().__init__(name, interval_sec, min_retrigger_interval_sec, action, enabled)
+    def __init__(self, type, name, interval_sec, min_retrigger_interval_sec, semantic_regions: List[SemanticSimilarityConfigSchema], action, enabled=True):
+        super().__init__(type, name, interval_sec, min_retrigger_interval_sec, action, enabled)
         self.semantic_regions = semantic_regions  # List of dicts with roi and embedding
         
 
@@ -178,6 +179,7 @@ class SemanticSimilaritySeeDo(SeeDo):
             semantic_regions.append(region)
 
         return cls(
+            type='semantic_similarity',
             name=schema.name,
             interval_sec=schema.interval_sec,
             min_retrigger_interval_sec=schema.min_retrigger_interval_sec,
@@ -189,8 +191,8 @@ class SemanticSimilaritySeeDo(SeeDo):
 
 
 class BrightnessSeeDo(SeeDo):
-    def __init__(self, name, interval_sec, min_retrigger_interval_sec, threshold, action, enabled=True):
-        super().__init__(name, interval_sec, min_retrigger_interval_sec, action, enabled)
+    def __init__(self, type, name, interval_sec, min_retrigger_interval_sec, threshold, action, enabled=True):
+        super().__init__(type, name, interval_sec, min_retrigger_interval_sec, action, enabled)
         self.threshold = threshold
 
     @classmethod
@@ -209,6 +211,7 @@ class BrightnessSeeDo(SeeDo):
     @classmethod
     def from_schema(cls, schema: SeeDoSchema, config: BrightnessConfigSchema, action):
         return cls(
+            type='brightness',
             name=schema.name,
             interval_sec=schema.interval_sec,
             min_retrigger_interval_sec=schema.min_retrigger_interval_sec,
