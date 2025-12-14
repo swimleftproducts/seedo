@@ -68,7 +68,7 @@ class CameraCapturePi(CameraCapture):
 
         # Create configuration using requested size
         config = self.cap.create_preview_configuration(
-          transform=Transform(vflip=True) 
+          transform=Transform(vflip=True) ,
           main={"size": (desired_width, desired_height)}  # width, height
         )
 
