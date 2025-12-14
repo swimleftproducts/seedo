@@ -60,6 +60,7 @@ class CameraCaptureUSB(CameraCapture):
 class CameraCapturePi(CameraCapture):    
     def __init__(self, desired_width, desired_height, device_index=0):
         from picamera2 import Picamera2
+        from libcamera import Transform
 
         self.cap = Picamera2()
 
@@ -67,7 +68,8 @@ class CameraCapturePi(CameraCapture):
 
         # Create configuration using requested size
         config = self.cap.create_preview_configuration(
-            main={"size": (desired_width, desired_height)}  # width, height
+          transform=Transform(hflip=True), 
+          main={"size": (desired_width, desired_height)}  # width, height
         )
 
         # Align configuration to hardware-supported modes

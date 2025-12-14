@@ -24,11 +24,14 @@ class AppController:
         self.ml_manager = ML_manager()
         self.camera_manager = CameraManager()
         self.seedo_manager = SeeDoManager(self.ml_manager, self.camera_manager)
-        import pdb
-        pdb.set_trace()
+
         #NOTE: I could see lazy loading of models being better if there are many models
         # and a given model is not used by any SeeDo instances yet.
-        self.ml_manager.Load_MobileNetV3()
+        seedo_types_loaded = [seedo.type for seedo in self.seedo_manager.seedos]
+        if 'semantic_similarity' in seedo_types_loaded:
+            self.ml_manager.Load_MobileNetV3()
+        if 'distance_change' in seedo_types_loaded:
+            self.ml_manager.Load_DepthAnythingV2()
 
         self.new_seedo_created = False
 
