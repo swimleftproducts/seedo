@@ -52,8 +52,6 @@ class CameraManager:
         now = time.time()
         #TODO: adding + .01 here gets the fps closer to actually 15. Do I care?
         if (now - self.last_frame_time  )>= (1 / self.target_fps):
-            start = timeit.default_timer()
-
             ret, frame = self.cap.read()
             if ret:
                 # uncomment last line to see actual frame rate
@@ -69,8 +67,6 @@ class CameraManager:
                         self._initiate_saving()
 
             self.last_frame_time = time.time()
-            end = timeit.default_timer()
-            print('time spent in capture', end-start)
             return self.latest_frame
         else:
             return self.latest_frame

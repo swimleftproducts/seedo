@@ -3,6 +3,9 @@ import numpy as np
 from PIL import Image
 from huggingface_hub import hf_hub_download
 import os
+import threading
+import time
+import cv2 as cv2
 
 
 class ML_manager:
@@ -15,18 +18,72 @@ class ML_manager:
     self.mobile_net_v3 = MobileNetV3()
   
   def Load_DepthAnythingV2(self):
-    pass
-  
+    print('loading depth anything v2')
+    self.depth_anything_v2_vits_378 = DepthAnythingV2(378)
 
 class DepthAnythingV2:
 
   def __init__(self, model_resolution = 378):
+
+    self._lock = threading.Lock()
+
+    self.model_resolution = model_resolution
+    self.last_depth_map = None
+    self.last_depth_ts = 0.0
+
+    self._pending_frame = None
+    self._last_run = 0.0
+
+    self._worker = None
+    self._run_event = threading.Event()
+  
     model_path = self._download_models(model_resolution)
     self.session = self._create_session(model_path)
 
+    
+  def request_depth(self, frame):
+    reszied_frame = cv2.resize(frame, (self.model_resolution, self.model_resolution), interpolation=cv2.INTER_NEAREST)
+    with self._lock:
+      self._pending_frame = reszied_frame.copy()
+
+  def start_running_depth_map(self):
+    if self._worker and self._worker.is_alive():
+      return
+    self._run_event.set()
+    self._worker = threading.Thread(
+        target=self._depth_map_worker, daemon=True
+    )
+    self._worker.start()    
+
+  def stop_running_depth_map(self):
+    self._run_event.clear()
+    
+  def _depth_map_worker(self):
+    while self._run_event.is_set():
+      frame = None
+      with self._lock:
+          if self._pending_frame is not None:
+              frame = self._pending_frame
+              self._pending_frame = None
+      
+      if frame is not None:
+        depth = self.get_depth_map(frame)
+        self.last_depth_map = depth
+        self.last_depth_ts = time.time()
+
+      time.sleep(0.05) 
+
+    print('_depth_map_worker is terminating')
+
+  def raw_to_gray_scale(self, depth: np.ndarray) -> np.ndarray:
+    depth = (depth - depth.min()) / (depth.max() - depth.min()) * 255.0
+    depth = depth.astype(np.uint8)
+    depth = np.repeat(depth[..., np.newaxis], 3, axis=-1)
+    return depth
+
   def _create_session(self, model_path):
     so = ort.SessionOptions()
-    so.intra_op_num_threads = os.cpu_count()     # threads inside one op
+    so.intra_op_num_threads = os.cpu_count()   
     so.execution_mode = ort.ExecutionMode.ORT_PARALLEL
     so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
     session = ort.InferenceSession(
@@ -35,9 +92,12 @@ class DepthAnythingV2:
         providers=["CPUExecutionProvider"]  # or CoreMLExecutionProvider first
     )
     return session
-  
 
-
+  def get_depth_map(self, frame: np.ndarray) -> np.ndarray:
+    """The image size must match the model loaded"""
+    inp = np.transpose(frame.astype(np.float32) / 255.0, (2,0,1))[None]
+    print('starting inference')
+    return self.session.run(None, {"input": inp})[0][0]
 
   def _download_models(self, model_resolution):
     model = f"depth_anything_vits_{model_resolution}.onnx"
@@ -118,5 +178,13 @@ if __name__ == "__main__":
   # calling deepth_anythinv2
 
   depth_v2 = DepthAnythingV2()
+  img = cv2.imread('core/ml/with_part.jpg')
+  depth_v2.start_running_depth_map()
+  depth_v2.request_depth(img)
+  time.sleep(5)
+  depth_gray = depth_v2.raw_to_gray_scale(depth_v2.last_depth_map)
+  h,w = img.shape[:2]
+  depth_gray_full = cv2.resize(depth_gray, (w, h))
+  cv2.imwrite('demo2.png',depth_gray_full)
   import pdb
   pdb.set_trace()

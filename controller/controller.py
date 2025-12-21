@@ -28,10 +28,15 @@ class AppController:
         #NOTE: I could see lazy loading of models being better if there are many models
         # and a given model is not used by any SeeDo instances yet.
         seedo_types_loaded = [seedo.type for seedo in self.seedo_manager.seedos]
-        if 'semantic_similarity' in seedo_types_loaded:
-            self.ml_manager.Load_MobileNetV3()
-        if 'distance_change' in seedo_types_loaded:
-            self.ml_manager.Load_DepthAnythingV2()
+        # if 'semantic_similarity' in seedo_types_loaded:
+        #     self.ml_manager.Load_MobileNetV3()
+        # if 'distance_change' in seedo_types_loaded:
+        #     self.ml_manager.Load_DepthAnythingV2()
+        
+        # But we would need to load the models to use them for previews. So, maybe no lazy loading? This
+        # will become an issue if 
+        self.ml_manager.Load_DepthAnythingV2()
+        self.ml_manager.Load_MobileNetV3()
 
         self.new_seedo_created = False
 
@@ -137,6 +142,31 @@ class AppController:
     def get_embedding(self, imgs: list[Image.Image]) -> np.ndarray:
         """Get embedding from ML model for given image."""
         return self.ml_manager.mobile_net_v3.get_embedding(imgs)
+    
+    def start_running_depth_map(self):
+        if self.ml_manager.depth_anything_v2_vits_378:
+            self.ml_manager.depth_anything_v2_vits_378.start_running_depth_map()
+    
+    def stop_running_depth_map(self):
+        if self.ml_manager.depth_anything_v2_vits_378:
+            self.ml_manager.depth_anything_v2_vits_378.stop_running_depth_map()
+   
+    
+    def request_depth(self):
+        if self.ml_manager.depth_anything_v2_vits_378:
+            self.ml_manager.depth_anything_v2_vits_378.request_depth(self.get_latest_frame())
+
+    def get_depth_map_gray_scale(self):
+        dm = self.ml_manager.depth_anything_v2_vits_378
+
+        if dm is None:
+            return None
+
+        if dm.last_depth_map is None:
+            return None
+
+        return dm.raw_to_gray_scale(dm.last_depth_map)
+
     
 
     # -------- SHUTDOWN --------

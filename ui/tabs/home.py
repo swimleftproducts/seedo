@@ -1,7 +1,13 @@
 from tkinter import ttk
 import tkinter as tk
 from PIL import Image, ImageTk
+from enum import Enum
 import time
+
+
+class ViewType(Enum):
+    PLAIN = 'plain'
+    DEPTH = 'depth'
 
 
 class HomeTab(tk.Frame):
@@ -12,51 +18,149 @@ class HomeTab(tk.Frame):
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
 
-   
-        self.MenuView = MenuView(self,controller)
-        self.CameraViewerView = CameraViewerView(self,controller)
+        self.MenuView = MenuView(self, controller)
+        self.CameraViewerView = CameraViewerView(self, controller)
 
-        # stack frames on top of each other
+        # stack frames; only the top one is visible
         self.MenuView.grid(row=0, column=0, sticky="nsew")
         self.CameraViewerView.grid(row=0, column=0, sticky="nsew")
 
-        self.MenuView.tkraise()  # start on page 1
-
-
+        self.current_frame = self.MenuView
+        self.MenuView.tkraise()
 
     def show_frame(self, frame):
+        if hasattr(self.current_frame, "on_hide"):
+            self.current_frame.on_hide()
+
         frame.tkraise()
+
+        if hasattr(frame, "on_show"):
+            frame.on_show()
+
+        self.current_frame = frame
+
 
 class CameraViewerView(tk.Frame):
     def __init__(self, parent, controller):
         super().__init__(parent)
 
         self.controller = controller
+        self.view = ViewType.PLAIN
+        self._showing_preview = False
+        self._after_id = None 
 
+        self.last_depth_ts = 0.0
+
+        # ---- top bar FIRST so it remains visible ----
+        top_bar = tk.Frame(self)
+        top_bar.pack(fill="x", side="top")
+
+        ttk.Button(
+            top_bar,
+            text="Back",
+            command=lambda: parent.show_frame(parent.MenuView)
+        ).pack(side="left")
+
+        ttk.Button(
+            top_bar,
+            text="Toggle Depth Map",
+            command=self.toggle_view_type
+        ).pack(side="right")
+
+        # ---- video label SECOND ----
         self.video_label = tk.Label(self)
         self.video_label.pack(expand=True, fill='both')
 
-        self.back_button =  ttk.Button(self, text="Back", width=20,
-                   command=lambda: parent.show_frame(parent.MenuView)).place(anchor='nw')
+    # -----------------------------
+    #       View Toggle
+    # -----------------------------
+    def toggle_view_type(self):
+        if self.view == ViewType.PLAIN:
+            self.view = ViewType.DEPTH
+            self.controller.start_running_depth_map()
+        else:
+            self.view = ViewType.PLAIN
+            self.controller.stop_running_depth_map()
 
-        self.update_preview()
+    # -----------------------------
+    #       Lifecycle Hooks
+    # -----------------------------
+    def on_show(self):
+        self._showing_preview = True
+        self._run_loop()
+        if self.view == ViewType.DEPTH:
+            self.controller.start_running_depth_map()
+
+    def on_hide(self):
+        self._showing_preview = False
+        if self._after_id:
+            self.after_cancel(self._after_id)
+            self._after_id = None
+        self.controller.stop_running_depth_map()
+
+    # -----------------------------
+    #       Preview Loop
+    # -----------------------------
+    def _run_loop(self):
+        if not self._showing_preview:
+            return
+
+        if self.view == ViewType.PLAIN:
+            self.update_preview_plain()
+        else:
+            self.update_preview_depth_map()
+
+        # schedule next frame
+        self._after_id = self.after(33, self._run_loop)
+
+    # -----------------------------
+    #       Plain Preview
+    # -----------------------------
+    def update_preview_plain(self):
+        camera = self.controller.camera_manager
+
+        if not camera.active:
+            self.video_label.config(image='', text="Camera not running...")
+            return
+
+        frame = camera.latest_frame
+        if frame is None:
+            return
+
+        img = Image.fromarray(frame)
+        imgtk = ImageTk.PhotoImage(image=img)
+        self.video_label.imgtk = imgtk
+        self.video_label.configure(image=imgtk)
+
+
+    def update_preview_depth_map(self):
         
-    def update_preview(self):
-            camera = self.controller.camera_manager
 
-            if not camera.active:
-                self.video_label.config(image='', text="Camera not running...")
-            else:
+        now = time.time()
+        if now - self.last_depth_ts < 2:
+            return
+        self.last_depth_ts = now
+        self.controller.request_depth()
+        img = self.controller.get_depth_map_gray_scale()
 
-                frame = camera.latest_frame
+        if img is None:
+            return
 
-                if frame is not None:
-                    img = Image.fromarray(frame)
-                    imgtk = ImageTk.PhotoImage(image=img)
-                    self.video_label.imgtk = imgtk
-                    self.video_label.configure(image=imgtk)
+        # convert to PIL
+        img_pil = Image.fromarray(img)
 
-            self.after(33, self.update_preview)   
+        # get current display size
+        w = self.video_label.winfo_width()
+        h = self.video_label.winfo_height()
+
+        # if width/height are zero (first frame), skip resize
+        if w > 1 and h > 1:
+            img_pil = img_pil.resize((w, h), Image.NEAREST)
+
+        imgtk = ImageTk.PhotoImage(img_pil)
+
+        self.video_label.imgtk = imgtk
+        self.video_label.configure(image=imgtk)
 
 
 
@@ -65,24 +169,35 @@ class MenuView(tk.Frame):
         super().__init__(parent, background='lightblue')
         self.controller = controller
 
-        # one column that expands
         self.columnconfigure(0, weight=1)
 
-        # spacer rows top & bottom absorb available space
-        self.rowconfigure(0, weight=1)  
+        self.rowconfigure(0, weight=1)
         self.rowconfigure(7, weight=3)
 
-        # button rows have minimal expansion
         for r in range(1, 7):
             self.rowconfigure(r, weight=1)
 
-        ttk.Button(self, style='Standard.TButton', text="View Camera", width=20,
-                   command=lambda: parent.show_frame(parent.CameraViewerView)).grid(row=2, column=0, sticky="")
-        ttk.Button(self, style='Standard.TButton', text="Start Camera",
-                   width=20, command=self.controller.start_camera).grid(row=3, column=0, sticky="")
-        ttk.Button(self, style='Standard.TButton', text="Stop Camera",
-                   width=20, command=self.controller.stop_camera).grid(row=4, column=0, sticky="")
-        ttk.Button(self, style='Standard.TButton', text="Start Recording",
-                   width=20, command=self.controller.start_recording).grid(row=5, column=0, sticky="")
-        ttk.Button(self, style='Standard.TButton', text="Stop Recording",
-                   width=20, command=self.controller.stop_recording).grid(row=6, column=0, sticky="")
+        ttk.Button(
+            self, style='Standard.TButton', text="View Camera", width=20,
+            command=lambda: parent.show_frame(parent.CameraViewerView)
+        ).grid(row=2, column=0)
+
+        ttk.Button(
+            self, style='Standard.TButton', text="Start Camera", width=20,
+            command=self.controller.start_camera
+        ).grid(row=3, column=0)
+
+        ttk.Button(
+            self, style='Standard.TButton', text="Stop Camera", width=20,
+            command=self.controller.stop_camera
+        ).grid(row=4, column=0)
+
+        ttk.Button(
+            self, style='Standard.TButton', text="Start Recording", width=20,
+            command=self.controller.start_recording
+        ).grid(row=5, column=0)
+
+        ttk.Button(
+            self, style='Standard.TButton', text="Stop Recording", width=20,
+            command=self.controller.stop_recording
+        ).grid(row=6, column=0)
