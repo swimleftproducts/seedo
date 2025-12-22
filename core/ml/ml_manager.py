@@ -76,10 +76,10 @@ class DepthAnythingV2:
     print('_depth_map_worker is terminating')
 
   def raw_to_gray_scale(self, depth: np.ndarray) -> np.ndarray:
-    depth = (depth - depth.min()) / (depth.max() - depth.min()) * 255.0
-    depth = depth.astype(np.uint8)
-    depth = np.repeat(depth[..., np.newaxis], 3, axis=-1)
-    return depth
+    depth = np.log(depth + 1e-6)   # compress far range
+    depth = (depth - depth.min()) / (depth.max() - depth.min())
+    depth = (depth * 255).astype(np.uint8)
+    return cv2.cvtColor(depth, cv2.COLOR_GRAY2BGR)
 
   def _create_session(self, model_path):
     so = ort.SessionOptions()

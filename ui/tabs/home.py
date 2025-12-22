@@ -3,6 +3,7 @@ import tkinter as tk
 from PIL import Image, ImageTk
 from enum import Enum
 import time
+import os
 
 
 class ViewType(Enum):
@@ -51,6 +52,8 @@ class CameraViewerView(tk.Frame):
 
         self.last_depth_ts = 0.0
 
+        self.capture_still = False
+
         # ---- top bar FIRST so it remains visible ----
         top_bar = tk.Frame(self)
         top_bar.pack(fill="x", side="top")
@@ -60,6 +63,12 @@ class CameraViewerView(tk.Frame):
             text="Back",
             command=lambda: parent.show_frame(parent.MenuView)
         ).pack(side="left")
+
+        ttk.Button(
+            top_bar,
+            text="Snap Still",
+            command= self.trigger_still_capture
+        ).pack(side="top")
 
         ttk.Button(
             top_bar,
@@ -97,6 +106,9 @@ class CameraViewerView(tk.Frame):
             self.after_cancel(self._after_id)
             self._after_id = None
         self.controller.stop_running_depth_map()
+    
+    def trigger_still_capture(self):
+        self.capture_still = True
 
     # -----------------------------
     #       Preview Loop
@@ -131,7 +143,15 @@ class CameraViewerView(tk.Frame):
         imgtk = ImageTk.PhotoImage(image=img)
         self.video_label.imgtk = imgtk
         self.video_label.configure(image=imgtk)
-
+        
+        if (self.capture_still):
+            h = os.getenv('HEIGHT')
+            w = os.getenv('WIDTH')
+            img_full = img
+            if h and w:
+                img_full = img.resize((int(w),int(h)))
+            img_full.save('core/data/stills/most_recent_preview.png')
+            self.capture_still = False
 
     def update_preview_depth_map(self):
         
@@ -149,6 +169,17 @@ class CameraViewerView(tk.Frame):
         # convert to PIL
         img_pil = Image.fromarray(img)
 
+        if (self.capture_still):
+            print('capturing depth map')
+            img_pil_full = img_pil
+            h = os.getenv('HEIGHT')
+            w = os.getenv('WIDTH')
+            if h and w:
+                print('resizing to', w, h)
+                img_pil_full = img_pil.resize((int(w),int(h)))
+            img_pil_full.save('core/data/stills/most_recent_depth_map.png')
+            self.capture_still = False
+
         # get current display size
         w = self.video_label.winfo_width()
         h = self.video_label.winfo_height()
@@ -161,7 +192,6 @@ class CameraViewerView(tk.Frame):
 
         self.video_label.imgtk = imgtk
         self.video_label.configure(image=imgtk)
-
 
 
 class MenuView(tk.Frame):
